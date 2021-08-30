@@ -1,4 +1,4 @@
-const newGameState = {
+export const newGameState = {
 	turn: 0,
 	phase: "start",
 	activePlayer: 0,
@@ -18,7 +18,9 @@ const newGameState = {
 			handScore: 0,
 			gameScore: 0,
 			selectedCard: "",
-			hand: [],
+			hand: [
+				{ id: 'c3', selected: false }
+			],
 			passes: [],
 			receivedPass: [],
 			tricks: []
@@ -30,7 +32,9 @@ const newGameState = {
 			handScore: 0,
 			gameScore: 0,
 			selectedCard: "",
-			hand: [],
+			hand: [
+				{ id: 'c3', selected: false }
+			],
 			passes: [],
 			receivedPass: [],
 			tricks: []
@@ -42,7 +46,9 @@ const newGameState = {
 			handScore: 0,
 			gameScore: 0,
 			selectedCard: "",
-			hand: [],
+			hand: [
+				{ id: 'c3', selected: false }
+			],
 			passes: [],
 			receivedPass: [],
 			tricks: []
@@ -54,7 +60,9 @@ const newGameState = {
 			handScore: 0,
 			gameScore: 0,
 			selectedCard: "",
-			hand: [],
+			hand: [
+				{ id: 'c3', selected: false }
+			],
 			passes: [],
 			receivedPass: [],
 			tricks: []

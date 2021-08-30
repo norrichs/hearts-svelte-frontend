@@ -1,46 +1,39 @@
 import { writable, derived } from "svelte/store";
-const dbUrl = "http://localhost:4500";
-export const gameId = writable("");
+import { newGameState } from './gameStates.js'
 
-const initValue = {
-	players: [
-		{
-			name: "player one",
-			playerType: "human",
-			hand: [''],
-		},
-	],
-};
+const dbUrl = "http://localhost:4500";
+let gameId
+const user = 0;
 
 // Custom GameState store with built-in fetch
 
-function createGameState() {
+const createGameState = () => {
 	// get the built-in functions from writeable
 
 	//TODO see if there's a better initial value
-	const { subscribe, set, update } = writable(initValue);
+	const { subscribe, set, update } = writable(newGameState);
 
-	// Functions this might need:
-	//	new game
-	//	deal hand
-	//	pass cards
-	//
 	return {
 		subscribe,
-		update,
 		newGame: () =>
 			update(async (gS) => {
-				let state = await fetchNewGame();
-				console.log(state);
-				state = await fetchDealtHand(state._id);
-				return state;
+				let newGS = await fetchNewGame();
+				console.log('new empty game', newGS);
+				gameId = newGS._id
+				newGS = await fetchDealtHand(gameId);
+				return newGS;
 			}),
-		dealHand: () => update((gS) => fetchDealtHand(gS._id)),
-		selectCard: (cardId, user) => update((gS) => fetchSelectCard(gS._id, user, cardId))
+		dealHand: () => update(async (gS) => await fetchDealtHand(gameId)),
+		selectCard: (cardId, user) => update(async (current) => {
+			current = await current
+			return await fetchSelectCard(current._id, user, cardId)
+		}),
+		passCards: () => update(async (gS) => await fetchPassCards()),
+		playCard: () => update(async (gS) => await fetchPlayCard())
 	};
 }
 
-export const gameState = createGameState();
+export const gS = createGameState();
 
 // const selectCard(id)
 
@@ -64,12 +57,50 @@ const fetchSelectCard = async (gameId, user, cardId) => {
 	console.log(" selecting card args", gameId, user, cardId)
 	const resp = await fetch(`${dbUrl}/gameState/selectCard/${gameId}/${user}/${cardId}`)
 	const data = await resp.json();
-	console.log(" - selected card, new gameState", data.data)
+	// console.log(" - selected card, new gameState", data.data)
 	return data.data
 }
 
-export const userHand = derived(gameState, ($gameState, set) => {
-	// console.log('derived store userHand', $gameState.players[0].hand)
-	console.log('current gamestate', $gameState)
-	set($gameState.players[0].hand);
-},['']);
+const fetchPassCards = async () => {
+	console.log(" passing cards args")
+	const resp = await fetch(`${dbUrl}/gameState/passCards/${gameId}`)
+	const data = await resp.json();
+	return data.data
+}
+
+const fetchPlayCard = async () => {
+	console.log(" playing card")
+	const resp = await fetch(`${dbUrl}/gameState/playCard/${gameId}/${user}`)
+	const data = await resp.json();
+	return data.data
+}
+
+
+export const userHand = derived(gS, async ($gS) => {
+	const current = await $gS
+	// console.log('userhand store', current.players[user].hand )
+	return [ ...current.players[user].hand ]
+});
+export const westHand = derived(gS, async ($gS) => {
+	const current = await $gS
+	// console.log('westhand store', current.players[(user + 1) % 4].hand)
+	return [ ...current.players[(user + 1) % 4].hand ]
+});
+export const northHand = derived(gS, async ($gS) => {
+	const current = await $gS
+	// console.log('northhand store', current.players[(user + 2) % 4].hand)
+	return [ ...current.players[(user + 2) % 4].hand ]
+});
+export const eastHand = derived(gS, async ($gS) => {
+	const current = await $gS
+	// console.log('easthand store', current.players[(user + 3) % 4].hand)
+	return [ ...current.players[(user + 3) % 4].hand ]
+});
+export const playedCards = derived(gS, async ($gS) => {
+	const current = await $gS
+	console.log('playedCards store', current.firstPlayer, current.playedCards.map(c=>c.id))
+	return { 
+		first: current.firstPlayer,
+		cards: [...current.playedCards.map(c=>c.id)]
+	}
+})

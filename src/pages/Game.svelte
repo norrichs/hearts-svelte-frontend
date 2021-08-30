@@ -1,253 +1,159 @@
 <script>
-	import { onDestroy, onMount } from "svelte";
-import { current_component } from "svelte/internal";
-
-	// import PlayDisplay from "../components/PlayDisplay.svelte";
 	import HandDisplay from "../components/HandDisplay.svelte";
-	import { gameState, userHand } from "../stores.js";
+	import PlayDisplay from "../components/PlayDisplay.svelte";
+	import { playedCards } from "../stores";
+	import { time, gS, gameId, played } from "../stores2.js";
 
-	// props
-	// export let dbUrl;
 	export let user;
+	let obscuredMode = true;
+	const dbUrl = "http://localhost:4500";
 
-	// Reactive state variables
-	// let userHand = $gameState.players[0].hand
-	let heartsBroken;
-	let gamePhase;
-	let passes;
-	let currentGameId
+	const logState = () => console.log("current gameState:", $gS);
+	// Reactive variables
 
-	// Game variables
+	const passMap = [
+		{ message: "pass across" },
+		{ message: "pass left" },
+		{ message: "pass right" },
+		{ message: "no pass" },
+	];
 
-
-	// const unsubGameId = gameId.subscribe((id) => {
-	// 	console.log('subscribed to gameId')
-	// 	currentGameId = gameId;
-	// })
-
-	// const unsubGameState = gameState.subscribe((state) => {
-	// 	userHand = [...state.players[user].hand];
-	// 	heartsBroken = state.heartsBroken;
-	// 	gamePhase = state.gamePhase;
-	// 	passes = [...state.players[user].passes];
-	// });
-	// onDestroy(unsubGameState);
-	// console.log('broken', heartsBroken)
-
-	// Handles card selection logic, which is different in different phases of the game
-	// TODO refactor this logic as backend function followed by store update
-	const handleCardClick = async (id) => {
-		let currentGameState = await $gameState
-		console.log('clicked, current state', currentGameState, 'cardId', id)
-		gameState.selectCard(id, user)
-	}
-
-
-	// const handleCardClick = async (id) => {
-	// 	let currentGameState = await $gameState
-	// 	console.log("clicked, current state", currentGameState, 'id', id);
-
-	// 	const i = currentGameState.players[user].hand.map((c) => c.id).indexOf(id);
-	// 	const card = currentGameState.players[user].hand[i];
-	// 	const gamePhase = currentGameState.phase;
-	// 	const passes = currentGameState.players[user].passes;
-	// 	// let passes = $gameState.players[user].passes
-	// 	if (gamePhase === "pass") {
-	// 		// Selection of three cards is allowed.
-	// 		if (passes.includes(id)) {
-	// 			// remove card from passes and set to unselected in hand
-	// 			gameState.update((gS) => {
-	// 				console.log("already selected", passes, id);
-	// 				passes.splice(passes.indexOf(id), 1);
-	// 				gS.players[user].passes = [...passes];
-	// 				console.log(userHand);
-	// 				userHand[i].selected = false;
-	// 				return gS;
-	// 			});
-	// 		} else if (passes.length === 3) {
-	// 			gameState.update((gS) => {
-	// 				console.log(
-	// 					"passes full, adding: " +
-	// 						card.id +
-	// 						" removing: " +
-	// 						passes[0] +
-	// 						" from: ",
-	// 					passes
-	// 				);
-	// 				userHand[i].selected = true;
-	// 				const deselectIndex = userHand
-	// 					.map((c) => c.id)
-	// 					.indexOf(passes[0]);
-	// 				userHand[deselectIndex].selected = false;
-	// 				gS.players[user].passes = [passes[1], passes[2], id];
-	// 				return gS;
-	// 			});
-	// 		} else {
-	// 			// Free selection
-	// 			gameState.selectCard(id)
-	// 			gameState.update((gS) => {
-	// 				console.log("adding to passes", passes, id, gS);
-	// 				gS.players[user].passes = [...passes, id];
-	// 				card.selected = true;
-	// 				return gS;
-	// 			});
-	// 		}
-	// 	} else if (gamePhase === "trick") {
-	// 		// Selection of one card allowed, must be of led suit, and must follow heartsbroken rules
-	// 		console.log("selecting for trick: " + id);
-	// 		if (isValidPlaySelection(id)) {
-	// 			if (passes.length === 0) {
-	// 				console.log("first selection");
-	// 				gameState.update((gS) => {
-	// 					userHand[i].selected = true;
-	// 					gS.players[user].passes = id;
-	// 					return gS;
-	// 				});
-	// 				//set play ready
-	// 			} else {
-	// 				if (passes[0] === id) {
-	// 					console.log("selected second, remove first");
-	// 				} else {
-	// 					console.log("deselecting");
-	// 				}
-	// 			}
-	// 		}
-	// 	} else {
-	// 		// Free selection of as many cards as desired
-	// 		console.log('unrestricted selection')
-	// 		gameState.update((gS) => {
-	// 			card.selected = card.selected ? false : true;
-	// 			return gS;
-	// 		});
-	// 	}
-	// };
-
-	// TODO update for SVELTE
-
-	const isValidPlaySelection = (id) => {
-		const ledSuit = gameState.playedCards[0][0];
-		console.log(
-			"isValid? ",
-			card,
-			"ledSuit",
-			ledSuit,
-			gameState.trickNum,
-			userHand.includes("c2")
+	// Handler Functions
+	const handleSelect = async (cardId) => {
+		console.log(" selecting card", $gameId, user, cardId);
+		const resp = await fetch(
+			`${dbUrl}/gameState/selectCard/${$gameId}/${user}/${cardId}`
 		);
-
-		if (gameState.trickNum === 1 && userHand.includes("c2")) {
-			alert("play c2, approved");
-			return card === "c2";
-		} else if (gameState.playedCards.length === 0) {
-			if (gameState.heartsBroken) return true;
-			else return card[0] !== "h";
-		} else if (userHand.map((c) => c[0]).includes(ledSuit))
-			return card[0] === ledSuit;
-		else return true;
+		const data = await resp.json();
+		return data.data;
 	};
-	////////////////
-	// GAME LOOPS //
-	////////////////
-	const gameLoop = async () => {
-		console.log('enter gameLoop')
-		await gameState.newGame()
-		console.log('gameState at new', $gameState)
-		// await gameState.dealHand($gameState._id)
-		// console.log('gameState at deal', $gameState)
-		// let currentGameState = await startNewGame()
-		// setGameId(currentGameState._id)
-		// console.log('new game data', currentGameState._id, currentGameState)
-		// let maxScore = 0;
-		// let winScore = currentGameState.winScore
-		// while(maxScore < winScore){
-		// 	console.log('start new hand, current maxScore:', maxScore)
-		// 	currentGameState = await handLoop(currentGameState._id)
-		// 	maxScore = currentGameState.maxScore
-		// }
+	const handlePass = async () => {
+		console.log("  pass these cards", $gS.players[user].passes);
+		const resp = await fetch(`${dbUrl}/gameState/passCards/${$gameId}`);
+		const data = await resp.json();
+		return data.data;
+	};
+	const handlePlay = async () => {
+		console.log("play this card", $gS.players[user].passes);
+		const resp = await fetch(
+			`${dbUrl}/gameState/playCard/${$gameId}/${user}`
+		);
+		const data = await resp.json();
+		return data.data;
+	};
+	const handleReveal = () => {
+		obscuredMode = obscuredMode ? false : true;
 	}
-
-
-
-
-
-	///////////////////////////////////////////////////////
-	//	Start New Game - 
-	//		Calls Seed function
-	//		Calls Deal function
-	//		Spreads new game state to local state variables
-	///////////////////////////////////////////////////////
-	// const startNewGame = async () => {
-	// 	console.log("  starting new Game")
-	// 	let resp = await fetch(`${dbUrl}/gameState/seed`)
-	// 	let data = await resp.json()
-	// 	console.log('got new game', data.data)
-	// 	const id   = data.data._id
-	// 	console.log('ready to deal', id)
-	// 	resp = await fetch(`${dbUrl}/gameState/deal/${id}`)
-	// 	data = await resp.json()
-	// 	const newGameData = data.data
-	// 	// spreadGameState(newGameData)
-	// 	console.log('  newly dealt game data', newGameData)
-		// return newGameData
-		
-	// }
-
-
-
-
-
-
-
-
-
-
-
-	onMount(gameLoop)
-
 </script>
 
+{#if $gS === null}
+<div>waiting</div>
+{:else}
 <main class="game-main">
-	<!-- <section class="play-area">
-		<PlayDisplay {playedCards} playerOrder={[0, 1, 2, 3]} {gameStatus} />
-	</section> -->
-	<aside class="south info-area">
-		<!-- <button class={passReady ? "shown" : "hidden"} onClick={handlePass}
-			>Pass</button
-		>
-		<button class={playReady ? "shown" : "hidden"} onClick={handlePlay}
-			>Play Card</button
-		> -->
-		<div id="game-phase">
-			{`${gamePhase} ${gamePhase === "pass" ? passes.length : ""}`}
-		</div>
-		<div id="broken-heart">Hearts Broken: {heartsBroken ? "💔" : "⍉"}</div>
-	</aside>
-	<section class="north hand-area" />
-	<section class="east hand-area" />
-	<section class="south hand-area">
-		{#await $gameState then data} 
-		<HandDisplay {handleCardClick} cards={data.players[0].hand} />
-		{/await}
+	<section class="play-area">
+		<PlayDisplay />
 	</section>
-	<section class="west hand-area" />
-</main>
+	<section class="west hand-area">
+		<div class="hand-wrapper">
+			<HandDisplay
+			{handleSelect}
+			cards={$gS.players[1].hand}
+			{obscuredMode}
+			/>
+		</div>
+	</section>
+	<section class="north hand-area">
+		<div class="hand-wrapper">
+				<HandDisplay
+					{handleSelect}
+					cards={$gS.players[2].hand}
+					{obscuredMode}
+					/>
+				</div>
+			</section>
+			<section class="east hand-area">
+				<div class="hand-wrapper">
+					<HandDisplay
+					{handleSelect}
+					cards={$gS.players[3].hand}
+					{obscuredMode}
+					/>
+			</div>
+		</section>
+		<section class="south hand-area">
+			<div class="hand-wrapper">
+				<button
+					class="game-button"
+					class:shown={$gS.players[user].passes.length === 1 &&
+						$gS.phase === "trick"}
+					on:click={handlePlay}>Play Card</button
+					>
+				<button
+				class="game-button"
+					class:shown={$gS.players[user].passes.length === 3 &&
+						$gS.phase === "pass"}
+					on:click={handlePass}>Pass</button
+				>
+				<HandDisplay
+					{handleSelect}
+					cards={$gS.players[0].hand}
+					obscuredMode={false}
+					/>
+			</div>
+		</section>
+		<aside class="debug-area">
+			<div>Time - {$time}</div>
+			<button on:click={logState}>Log State</button>
+			<button on:click={handleReveal}>Reveal opponents</button>
+			<div>Game: {$gameId}</div>
+			<div>phase: {$gS.phase}</div>
+			<div>
+				<span>
+					first: {$played.first}
+				</span>
+				<span>
+					played: {$gS.playedCards.map(
+						(c) => c.id
+						)}{$played.cards.map((c) => c.id)}
+				</span>
+			</div>
+			<div>Led: {$played.cards.length > 0 ? $played.cards[0][0] : ''}</div>
+		</aside>
+	</main>
+{/if}
 
 <style>
 	.game-main {
+		margin: 0 auto;
+		box-sizing: border-box;
 		height: 99vh;
 		width: 99vw;
+		overflow: hidden;
 		display: grid;
 		--hand-height: calc(var(--card-height) + 10px);
 		grid-template-rows: var(--hand-height) auto var(--hand-height);
 		grid-template-columns: var(--hand-height) auto var(--hand-height);
 		grid-template-areas:
-			" .  hn  .  "
-			" hw pa  he "
-			" .  hs  ia  ";
+		" hw  hn  he  "
+			" hw  pa  he "
+			" i1  hs  i2  ";
 	}
-	.info-area {
-		overflow-x: hidden;
+	.game-main {
+		grid-template-columns: 10px 300px 1fr 3fr 10px 3fr 1fr 300px 10px;
+		grid-template-rows: 10px 300px 3fr 10px 4fr 300px 10px;
+		grid-template-areas:
+			" .  .  .  .  .  .  .  .  . "
+			" .  .  .  .  hn .  .  .  . "
+			" .  .  .  pa pa pa .  .  . "
+			" .  hw .  pa pa pa .  he . "
+			" .  .  .  pa pa pa .  .  . "
+			" .  i1 i1 .  hs .  i2 i2 . "
+			" .  i1 i1 .  .  .  i2 i2 . ";
 	}
+	.game-main > {
+		border: 1px solid black;
+	}
+
 	.hand-area.north {
 		grid-area: hn;
 	}
@@ -260,29 +166,83 @@ import { current_component } from "svelte/internal";
 	.hand-area.west {
 		grid-area: hw;
 	}
-	.info-area.south {
-		grid-area: ia;
+	.debug-area {
+		grid-area: i1;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: flex-end;
+		background-color: lightsteelblue;
 	}
-	/* .play-area {
+	.info-area {
+		grid-area: i2;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: flex-end;
+		background-color: lightsteelblue;
+	}
+	button.game-button.shown {
+		visibility: visible;
+		bottom: 100px;
+		transition: 500ms;
+	}
+	.game-button {
+		visibility: hidden;
+		background-color: rgba(220, 10, 10, 0.6);
+		border: 5px solid rgba(100, 10, 10, 0.9);
+		box-shadow: 0 0 10px 2px rgba(100, 10, 10, 0.9);
+		font-size: 4em;
+		position: absolute;
+		bottom: -200px;
+		z-index: 100;
+		border-radius: 0.25em;
+		transition: 500ms;
+	}
+	.game-button:active {
+		background-color: rgba(220, 10, 10, 0.9);
+	}
+	.play-area {
 		grid-area: pa;
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		border:1px solid magenta;
+		border: 1px solid magenta;
 		width: 100%;
 		height: 100%;
 	}
-	.game-sidebar {
-		grid-area: side;
+	.north .hand-wrapper {
+		transform: translateY(calc(0px - var(--hand-height) * 0.65))
+			rotateZ(180deg);
 	}
+	.east .hand-wrapper {
+		transform: translateX(calc(var(--hand-height) * 0.65)) rotateZ(-90deg);
+	}
+	.west .hand-wrapper {
+		transform: translateX(calc(0px - var(--hand-height) * 0.65))
+			rotateZ(90deg);
+	}
+	.south .hand-wrapper {
+		transform: translateY(calc(var(--hand-height) * 0.65));
+	}
+	.hand-area {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		/* position: relative; */
+		background-color: sandybrown;
+	}
+	.hand-wrapper {
+		background-color: blue;
+		height: 100%;
+		width: 1px;
 
-	.north .hand-display {
-		transform: rotateZ(180deg);
+		/* position: absolute; */
+		top: 0;
+		left: 50%;
+
+		display: flex;
+		justify-content: center;
+		align-items: center;
 	}
-	.east .hand-display {
-		transform: rotateZ(-90deg);
-	}
-	.west .hand-display {
-		transform: rotateZ(90deg);
-	} */
 </style>

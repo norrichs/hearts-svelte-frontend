@@ -42,8 +42,16 @@ Apparently this does nothing to the element other than to put it in the same sta
 	opacity: 0.999;		//invisible change.  setting opacity to 1 does not work.
 }
 ```
-However, setting o
 
-&#x1F494;
-&#x2764;
-&#x2349;
+
+### Await block issues
+My Hearts game is implemented as a multiplayer game, allowing for multiple human players to play the same game in real-time.  Gameplay logic runs on an ExpressJS server, which stores the game state as a structured JSON document in mongoDB.  The frontend uses custom Svelte store implementation.  All coordination with the backend runs through methods in the store implementation, so that Svelte components need only deal with the Store.  Svelte stores provide a subscription to a 'reactive' variable, such that any markup with these 'reactive' variable dependencies automagically re-renders when the values change.
+
+Since the store is synced with the database, updates are asynchronous, and so the store sometimes serves unresolved promises.  As such, to directly use the store values in markup, they need to be wrapped in an {#await} block.  
+
+However, the await block, when resolved, removes the child element from the DOM and re-inserts it, which means css transitions are not rendered.  
+
+Instead, I use a standard variable declared with the 'let' keyword, and reassign the variable using the await keyword, all within the ```html 
+	<script> 
+``` 
+area.  Elements rendered using this variable are kept updated, but are not removed and re-inserted into the DOM.

@@ -30,3 +30,38 @@
 3. Game
 	a)gameLoop
 		i) 
+
+
+### Game Cycle refactor
+1.  Express server contains all game logic
+2.  Routes include:
+	- start
+	- select
+	- pass
+	- play
+3.  Router functions are minimal.  Minimal data sent as args.
+4.  All router functions pass to heatsLib central game router
+5.  Central game router uses current gameState and user action to navigate decision tree and trigger game actions, returning a new gameState, which is also updated to DB
+6.  Database is _simply_ synced to store.  Use a readable store.  Store sync method has a timing parameter in gameState Object that specifies frequency, so that it is adjustable.
+7.  Frontend state has _single_ source of truth, which is gameState store.  Only do this if a working prototype can be developed that avoids any refresh() type methods.  Just use in-built store reactivity and resolve promises in-store
+
+
+Game Decision Tree
+
+	IF phase === start
+		newGame()  	// newGame() deals to json, then seeds
+		prepPasses()		// prepPasses() checks how to pass based on gameState, does computer passes
+	ELSE IF phase === newHand
+		newHand(gameId) 	// newHand() deals to json, then updates
+		prepPasses()
+
+		// After a hand is dealt and computer player passes have been set, waiting for player input
+	ELSE IF phase === 'pass'
+		IF action === select
+			select('toPass')
+		ELSE IF action === 'pass'
+			passCards()		// passCards exchanges selections between hands
+
+
+function pass()
+	IF 

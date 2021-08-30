@@ -1,56 +1,43 @@
 <script>
+	import { onMount } from "svelte";
+
 	import CardFront from "../components/CardFront.svelte";
+	import { played } from "../stores2.js";
+	// export let played;
+	let order = [0, 1, 2, 3];
+	const directions = ["south", "west", "north", "east"];
+	console.log("playDisplay prop", $played);
 </script>
 
-<div class="play-display">
-	<div class="south">
-		<div class="card-place">hello
-			<!-- {playedCards[playerOrder[0]] ? (
-				<CardFront
-					cardValue={playedCards[playerOrder[0]]}
-					handleSelectCard={"none"}
-				/>
-			) : null} -->
+{#if $played === null}
+	<div>waiting</div>
+{:else}
+	<div class="play-display">
+		{#each order as place}
+			<div class={directions[(place + $played.first) % 4]}>
+				{(place + $played.first) % 4}
+				<div class="card-place">
+					{#if $played.cards[place]}
+						<CardFront cardValue={$played.cards[place]} />
+					{/if}
+				</div>
+			</div>
+		{/each}
+		<div class="play-info">
+			{#if $played.cards.length > 0}
+				{$played.first}
+				{$played.cards}
+			{:else}
+				No played
+			{/if}
+			<!-- {gameStatus} -->
 		</div>
 	</div>
-	<div class="west">
-		<div class="card-place">
-			<!-- {playedCards[playerOrder[1]] ? (
-				<CardFront
-					cardValue={playedCards[playerOrder[1]]}
-					handleSelectCard={"none"}
-				/>
-			) : null} -->
-		</div>
-	</div>
-	<div class="north">
-		<div class="card-place">
-			<!-- {playedCards[playerOrder[2]] ? (
-				<CardFront
-					cardValue={playedCards[playerOrder[2]]}
-					handleSelectCard={"none"}
-				/>
-			) : null} -->
-		</div>
-	</div>
-	<div class="east">
-		<div class="card-place">
-			<!-- {playedCards[playerOrder[3]] ? (
-				<CardFront
-					cardValue={playedCards[playerOrder[3]]}
-					handleSelectCard={"none"}
-				/>
-			) : null} -->
-		</div>
-	</div>
-	<div class="play-info">
-		<!-- {gameStatus} -->
-	</div>
-</div>
+{/if}
 
 <style>
-	
 	.play-display {
+		background-color: lightskyblue;
 		margin: 20px;
 		display: grid;
 		grid-template-rows:

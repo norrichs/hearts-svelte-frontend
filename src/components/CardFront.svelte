@@ -38,7 +38,6 @@
 </script>
 
 <div class={`card-front suit-${suit}`}>
-
 	<div class="value">
 		<div>{valueText[value - 2]}</div>
 		<div>{suits[suit]}</div>
@@ -100,6 +99,7 @@
 	.value {
 		padding: 5px 0px 0px 5px;
 		align-items: flex-end;
+		justify-content: center;
 		overflow: visible;
 		background-color: transparent;
 	}
@@ -111,8 +111,13 @@
 		background-color: transparent;
 	}
 	.card-front {
+		font-size: calc( var(--card-width) * 0.15);
+		height: var(--card-height);
 		background-color: var(--cardfront-background);
 		border-radius: var(--card-border-radius);
+		display: flex; 
+		flex-direction: column;
+		justify-content: space-between;
 	}
 	.suit-d,
 	.suit-h {
@@ -135,9 +140,12 @@
 		" s4 s2 .  s1 s3 " 1fr
 		" s8 s6 b2 b2 .  " 1fr
 		" .  .  b2 b2 .  " 1fr / 1fr 1fr 1fr 1fr 1fr; */
+
+		width: calc( var(--card-width) * 0.6);
+		height: calc( var(--card-width) * 0.6);
 		display: grid;
-		grid-template-rows: 1em 1em 0.75em 1em 1em;
-		grid-template-columns: 1em 1em 1em 1em 1em;
+		grid-template-rows: 1fr 1fr 0.75fr 1fr 1fr;
+		grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
 		grid-template-areas:
 			" .  b1 b1 .  .  "
 			" .  b1 b1 s5 s7 "
@@ -188,7 +196,7 @@
 	.sym-s3,
 	.sym-s5,
 	.sym-s7 {
-		transform: rotateZ(0.1deg);
+		transform: rotateZ(0deg);
 	}
 
 	.sym-b2,
@@ -231,5 +239,11 @@
 	}
 	.sym-s8 {
 		grid-area: s8;
+	}
+	.value,
+	.symbol-wrapper {
+		-webkit-user-select: none; /* Safari */
+		-ms-user-select: none; /* IE 10 and IE 11 */
+		user-select: none; /* Standard syntax */
 	}
 </style>
