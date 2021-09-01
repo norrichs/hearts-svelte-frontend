@@ -1,9 +1,12 @@
 import { writable, readable, derived } from "svelte/store";
-import { newGameState } from './gameStates.js'
+// import {url} from './pages/Game.svelte'
+// import { newGameState } from './gameStates.js'
 
 let gameIdLocal;
+const localUrl = 'http://localhost:4500'
+const deployedUrl = "https://hearts-backend.herokuapp.com";
 
-const dbUrl = "http://localhost:4500";
+export const url = localUrl;
 const user = 0;
 
 // export const time = readable(null, (set) => {
@@ -41,7 +44,7 @@ const createGameState = () => {
 		// selectCard: (user, cardId) => update( async (gS)=>{
 		// 	console.log('gS.selectCard', gameIdLocal, user, cardId)
 		// 	const resp = await fetch(
-		// 		`${dbUrl}/gameState/selectCard/${gameIdLocal}/${user}/${cardId}`
+		// 		`${url}/gameState/selectCard/${gameIdLocal}/${user}/${cardId}`
 		// 	);
 		// 	const data = await resp.json();
 		// 	return data.data;
@@ -140,7 +143,7 @@ const startNewGame = async () => {
 
 const fetchNewGame = async () => {
 	console.log(" starting new game");
-	const resp = await fetch(`${dbUrl}/gameState/seed`);
+	const resp = await fetch(`${url}/gameState/seed`);
 	const data = await resp.json();
 	console.log(" - got new game", data.data);
 	return data.data;
@@ -148,7 +151,7 @@ const fetchNewGame = async () => {
 
 const fetchDealtHand = async () => {
 	console.log(" dealing hand");
-	const resp = await fetch(`${dbUrl}/gameState/deal/${gameIdLocal}`);
+	const resp = await fetch(`${url}/gameState/deal/${gameIdLocal}`);
 	const data = await resp.json();
 	console.log(" - newly dealt hand gamedata", data.data);
 	return data.data;
@@ -156,7 +159,7 @@ const fetchDealtHand = async () => {
 
 const pollGameState = async () => {
 	// console.log(' refreshing game state')
-	const resp = await fetch(`${dbUrl}/gameState/getState/${gameIdLocal}/${user}`);
+	const resp = await fetch(`${url}/gameState/getState/${gameIdLocal}/${user}`);
 	const data = await resp.json();
 	const result = { ...data.data };
 	console.log(" gS", result);

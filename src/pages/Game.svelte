@@ -2,11 +2,14 @@
 	import HandDisplay from "../components/HandDisplay.svelte";
 	import PlayDisplay from "../components/PlayDisplay.svelte";
 	import TrickPile from "../components/TrickPile.svelte";
-	import { gS, gameId, played } from "../stores.js";
+	import { gS, gameId, played, url } from "../stores.js";
 
 	export let user;
 	let obscuredMode = true;
-	const dbUrl = "http://localhost:4500";
+	// const localUrl = "http://localhost:4500";
+	// const deployedUrl = "https://hearts-backend.herokuapp.com"
+	
+
 
 	const logState = () => console.log("current gameState:", $gS);
 	// Reactive variables
@@ -22,21 +25,21 @@
 	const handleSelect = async (cardId) => {
 		console.log(" selecting card", $gameId, user, cardId);
 		const resp = await fetch(
-			`${dbUrl}/gameState/selectCard/${$gameId}/${user}/${cardId}`
+			`${url}/gameState/selectCard/${$gameId}/${user}/${cardId}`
 		);
 		const data = await resp.json();
 		gS.syncState(data.data);
 	};
 	const handlePass = async () => {
 		console.log("  pass these cards", $gS.players[user].passes);
-		const resp = await fetch(`${dbUrl}/gameState/passCards/${$gameId}`);
+		const resp = await fetch(`${url}/gameState/passCards/${$gameId}`);
 		const data = await resp.json();
 		gS.syncState(data.data);
 	};
 	const handlePlay = async () => {
 		console.log("play this card", $gS.players[user].passes);
 		const resp = await fetch(
-			`${dbUrl}/gameState/playCard/${$gameId}/${user}`
+			`${url}/gameState/playCard/${$gameId}/${user}`
 		);
 		const data = await resp.json();
 		gS.syncState(data.data);
@@ -115,6 +118,7 @@
 		</aside>
 		<aside class="debug-area">
 			<!-- <div>Time - {$time}</div> -->
+			<div>backend url : {url}</div>
 			<button on:click={logState}>Log State</button>
 			<button on:click={handleReveal}>Reveal opponents</button>
 			<div>Game: {$gameId}</div>
