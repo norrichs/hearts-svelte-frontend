@@ -1,4 +1,5 @@
 import { writable, readable, derived } from "svelte/store";
+
 // import {url} from './pages/Game.svelte'
 // import { newGameState } from './gameStates.js'
 
@@ -21,42 +22,37 @@ const user = 0;
 
 
 
-let delay = 5000;
+let delay = 500;
 
+// const delay = writable(5000)
 
-const createGameState = () => {
-	const { subscribe, set, update } = writable(null, async (set)=>{
+const createGameState = (delay) => {
+	console.log('createGameState', delay)
+	const { subscribe, set, update } = writable(null, async (set,tick=delay)=>{
+		console.log('set', delay)
 		set(await startNewGame())
 		
 		const interval = setInterval( async () => {
 			set( await pollGameState(gameIdLocal))
-		}, 1000)
+		}, tick)
 
 		return ()=>clearInterval(interval)
-	})
+	}, delay)
 
 
 	return {
 		subscribe,
 		update,
 		set,
-		syncState: (newGS)=>set(newGS)
-		// selectCard: (user, cardId) => update( async (gS)=>{
-		// 	console.log('gS.selectCard', gameIdLocal, user, cardId)
-		// 	const resp = await fetch(
-		// 		`${url}/gameState/selectCard/${gameIdLocal}/${user}/${cardId}`
-		// 	);
-		// 	const data = await resp.json();
-		// 	return data.data;
-		// })
-		// pass
-		// play
+		stop,
+		syncState: (newGS)=>set(newGS),
+		pollNow: async () => {set(await pollGameState(gameIdLocal))}
 	}
 }
 
-export const gS = createGameState()
+export const gS = createGameState(delay)
 
-
+{
 // export const gS = writable(null, async (set) => {
 // 	set(await startNewGame());
 
@@ -117,7 +113,7 @@ export const gS = createGameState()
 // export const gS = createGS();
 
 
-
+}
 
 
 export const gameId = derived(gS, $gS => {

@@ -44,7 +44,8 @@
 		--select-scale: 1.0;
 		--select-rotation: 0deg;
 		--header-height: 100px;
-		--card-overlap-reveal: 0.15;
+		--card-overlap-reveal: 0.2;
+		--trick-card-scale: 1;
 		--npc-scale: 0.6;
 	}
 	/* header{

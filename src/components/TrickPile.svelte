@@ -3,16 +3,19 @@
 	import CardFront from "./CardFront.svelte";
 	import CardBack from "./CardBack.svelte";
 	export let obscuredMode;
-	export let user;
+	export let user=0;
 </script>
 
-{#if ($gS === null)}
+{#if $gS === null}
 	<section>...Waiting</section>
 {:else}
+	<h2>Tricks</h2>
 	<section style="--trick-count: {$gS.players[user].tricks.length}">
 		{#each $gS.players[user].tricks as card, i (card.id)}
+			<!-- <div class='card-container'>{card.id}</div> -->
+
 			{#if obscuredMode}
-				<div class="card-container">
+				<div class="trick-card-container">
 					<CardFront cardValue={card.id} />
 				</div>
 			{:else}
@@ -33,17 +36,14 @@
 		);
 	}
 
-	.card-container {
+	.trick-card-container {
 		border-radius: var(--card-border-radius);
-		height: var(--card-height);
-		width: calc(var(--card-height) * var(--card-ratio));
-		transform-origin: 50% 200%;
-		transform: rotateZ(
-			calc(var(--card-number) * 5deg - var(--card-count) * 2.2deg)
-		);
+		height: calc( var(--card-height) * var(--trick-card-scale));
+		width: calc(var(--card-width) * var(--trick-card-scale));
+		transform: rotateZ(0deg);
 		transition: var(--select-speed);
-		position: absolute;
-		top: -300px;
+		/* position: absolute; */
+		/* top: -300px; */
 		box-shadow: 4px 4px 6px 0px black;
 	}
 </style>

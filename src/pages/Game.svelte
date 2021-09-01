@@ -2,14 +2,14 @@
 	import HandDisplay from "../components/HandDisplay.svelte";
 	import PlayDisplay from "../components/PlayDisplay.svelte";
 	import TrickPile from "../components/TrickPile.svelte";
+	import { navigate } from "svelte-routing";
 	import { gS, gameId, played, url } from "../stores.js";
+	import { onDestroy } from "svelte";
 
 	export let user;
 	let obscuredMode = true;
 	// const localUrl = "http://localhost:4500";
 	// const deployedUrl = "https://hearts-backend.herokuapp.com"
-	
-
 
 	const logState = () => console.log("current gameState:", $gS);
 	// Reactive variables
@@ -20,6 +20,14 @@
 		{ message: "pass right" },
 		{ message: "no pass" },
 	];
+
+	// Lifecycle
+	const unsubscribe = () => {
+		gS.subscribe((gS) => {
+			navigate("/", { replace: true });
+		});
+	};
+	// onDestroy(()=>gS.unsubscribe)
 
 	// Handler Functions
 	const handleSelect = async (cardId) => {
@@ -44,14 +52,22 @@
 		const data = await resp.json();
 		gS.syncState(data.data);
 	};
+	const handleDealHand = async () => {
+		console.log(" dealing hand");
+		const resp = await fetch(`${url}/gameState/deal/${$gameId}`);
+		const data = await resp.json();
+		console.log(" - newly dealt hand gamedata", data.data);
+		return data.data;
+	};
 	const handleReveal = () => {
 		obscuredMode = obscuredMode ? false : true;
 	};
 	const handleAccept = () => {
-		console.log(
-			'accept'
-		)
-	}
+		console.log("accept");
+	};
+	const handleSurrenderHand = () => {
+		console.log("surrender this hand, take all remaining hearts");
+	};
 </script>
 
 {#if $gS === null}
@@ -90,10 +106,23 @@
 		</section>
 		<section class="south hand-area">
 			<div class="hand-wrapper">
-				<button 
-					class='game-button'
-					class:shown={$gS.playedCards.length===4}
-					on:click={handleAccept}>Accept</button>
+				<button
+					class="game-button"
+					class:shown={$gS.phase === "hand-complete"}
+					on:click={handleDealHand}>The Hand Is Done!</button
+				>
+				<button
+					class="game-button"
+					class:shown={$gS.phase === "game-complete"}
+					on:click={() => {
+						navigate("/", { replace: false });
+					}}>Somebody Won!</button
+				>
+				<button
+					class="game-button"
+					class:shown={$gS.playedCards.length === 4}
+					on:click={handleAccept}>Accept</button
+				>
 				<button
 					class="game-button"
 					class:shown={$gS.players[user].passes.length === 1 &&
@@ -121,6 +150,7 @@
 			<div>backend url : {url}</div>
 			<button on:click={logState}>Log State</button>
 			<button on:click={handleReveal}>Reveal opponents</button>
+			<button on:click={handleSurrenderHand}>Surrender Hand</button>
 			<div>Game: {$gameId}</div>
 			<div>phase: {$gS.phase}</div>
 			<div>
@@ -137,6 +167,7 @@
 				Led: {$played.cards.length > 0 ? $played.cards[0][0] : ""}
 			</div>
 			<div>Turn: {$gS.activePlayer}</div>
+			<div>{$gS.heartsBroken ? "💔" : "⍉"}</div>
 			<div>
 				Score: {$gS.maxScore}
 				{#each $gS.players as player, i}
@@ -204,14 +235,14 @@
 		justify-content: flex-end;
 		background-color: lightsteelblue;
 	}
-	.info-area {
+	/* .info-area {
 		grid-area: i2;
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
 		justify-content: flex-end;
 		background-color: lightsteelblue;
-	}
+	} */
 	button.game-button.shown {
 		visibility: visible;
 		bottom: 100px;
@@ -274,5 +305,10 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
+	}
+	.trick-area {
+		grid-area: t2;
+		background-color: burlywood;
+		border: 4px solid black;
 	}
 </style>
