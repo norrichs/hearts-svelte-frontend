@@ -1,5 +1,5 @@
 <script>
-	import { gS } from "../stores3.js";
+	import { gS } from "../stores.js";
 	import CardFront from "./CardFront.svelte";
 	import CardBack from "./CardBack.svelte";
 	export let obscuredMode;

@@ -2,7 +2,7 @@
 	import { onMount } from "svelte";
 
 	import CardFront from "../components/CardFront.svelte";
-	import { played } from "../stores3.js";
+	import { played } from "../stores.js";
 	// export let played;
 	let order = [0, 1, 2, 3];
 	const directions = ["south", "west", "north", "east"];

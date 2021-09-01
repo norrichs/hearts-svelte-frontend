@@ -2,8 +2,7 @@
 	import HandDisplay from "../components/HandDisplay.svelte";
 	import PlayDisplay from "../components/PlayDisplay.svelte";
 	import TrickPile from "../components/TrickPile.svelte";
-	// import { playedCards } from "../stores";
-	import { gS, gameId, played } from "../stores3.js";
+	import { gS, gameId, played } from "../stores.js";
 
 	export let user;
 	let obscuredMode = true;

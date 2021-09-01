@@ -1,41 +1,142 @@
-import { writable, derived } from "svelte/store";
+import { writable, readable, derived } from "svelte/store";
 import { newGameState } from './gameStates.js'
 
+let gameIdLocal;
+
 const dbUrl = "http://localhost:4500";
-let gameId
 const user = 0;
 
-// Custom GameState store with built-in fetch
+// export const time = readable(null, (set) => {
+// 	set(new Date());
+
+// 	const interval = setInterval(() => {
+// 		set(new Date());
+// 	}, 1000);
+
+// 	return () => clearInterval(interval);
+// });
+
+
+
+let delay = 5000;
+
 
 const createGameState = () => {
-	// get the built-in functions from writeable
+	const { subscribe, set, update } = writable(null, async (set)=>{
+		set(await startNewGame())
+		
+		const interval = setInterval( async () => {
+			set( await pollGameState(gameIdLocal))
+		}, 1000)
 
-	//TODO see if there's a better initial value
-	const { subscribe, set, update } = writable(newGameState);
+		return ()=>clearInterval(interval)
+	})
+
 
 	return {
 		subscribe,
-		newGame: () =>
-			update(async (gS) => {
-				let newGS = await fetchNewGame();
-				console.log('new empty game', newGS);
-				gameId = newGS._id
-				newGS = await fetchDealtHand(gameId);
-				return newGS;
-			}),
-		dealHand: () => update(async (gS) => await fetchDealtHand(gameId)),
-		selectCard: (cardId, user) => update(async (current) => {
-			current = await current
-			return await fetchSelectCard(current._id, user, cardId)
-		}),
-		passCards: () => update(async (gS) => await fetchPassCards()),
-		playCard: () => update(async (gS) => await fetchPlayCard())
-	};
+		update,
+		set,
+		syncState: (newGS)=>set(newGS)
+		// selectCard: (user, cardId) => update( async (gS)=>{
+		// 	console.log('gS.selectCard', gameIdLocal, user, cardId)
+		// 	const resp = await fetch(
+		// 		`${dbUrl}/gameState/selectCard/${gameIdLocal}/${user}/${cardId}`
+		// 	);
+		// 	const data = await resp.json();
+		// 	return data.data;
+		// })
+		// pass
+		// play
+	}
 }
 
-export const gS = createGameState();
+export const gS = createGameState()
 
-// const selectCard(id)
+
+// export const gS = writable(null, async (set) => {
+// 	set(await startNewGame());
+
+// 	const interval = setInterval(async () => {
+// 		set(await pollGameState(gameIdLocal));
+// 	}, 5000);
+
+// 	return () => clearInterval(interval);
+// });
+
+
+
+
+
+
+
+
+
+
+
+// WORKING WRITABLE STORE
+
+// export const gS = writable(null, async (set) => {
+// 	set(await startNewGame());
+
+// 	const interval = setInterval(async () => {
+// 		set(await pollGameState(gameIdLocal));
+// 	}, 5000);
+
+// 	return () => clearInterval(interval);
+// });
+
+
+
+
+
+// const createGS = () => {
+// 	const {subscribe, set, update} = writable(null, async (set)=>{
+// 		const newGame = await startNewGame()
+// 		gameIdLocal = newGame._id
+// 		set(newGame)
+// 		console.log('*** ',gameIdLocal)
+// 	})
+	
+// 	const interval = setInterval(async () => {
+// 		console.log('interval')
+// 		console.log(gameIdLocal)
+// 		set(await pollGameState(gameIdLocal))
+// 	}, 10000)
+	
+// 	return {
+// 		subscribe,
+// 		unsubscribe: () => clearInterval(interval)
+// 	}
+	
+// }
+
+// export const gS = createGS();
+
+
+
+
+
+export const gameId = derived(gS, $gS => {
+	if($gS!==null) return $gS._id
+})
+
+export const played = derived(gS, ($gS) => {
+	if ($gS !== null) {
+		return {
+			first: $gS.firstPlayer,
+			cards: $gS.playedCards.map(c=>c.id),
+		};
+	}
+});
+
+
+const startNewGame = async () => {
+	let newGame = await fetchNewGame();
+	gameIdLocal = newGame._id;
+	newGame = await fetchDealtHand();
+	return newGame;
+};
 
 const fetchNewGame = async () => {
 	console.log(" starting new game");
@@ -45,62 +146,19 @@ const fetchNewGame = async () => {
 	return data.data;
 };
 
-const fetchDealtHand = async (gameId) => {
+const fetchDealtHand = async () => {
 	console.log(" dealing hand");
-	const resp = await fetch(`${dbUrl}/gameState/deal/${gameId}`);
+	const resp = await fetch(`${dbUrl}/gameState/deal/${gameIdLocal}`);
 	const data = await resp.json();
 	console.log(" - newly dealt hand gamedata", data.data);
 	return data.data;
 };
 
-const fetchSelectCard = async (gameId, user, cardId) => {
-	console.log(" selecting card args", gameId, user, cardId)
-	const resp = await fetch(`${dbUrl}/gameState/selectCard/${gameId}/${user}/${cardId}`)
+const pollGameState = async () => {
+	// console.log(' refreshing game state')
+	const resp = await fetch(`${dbUrl}/gameState/getState/${gameIdLocal}/${user}`);
 	const data = await resp.json();
-	// console.log(" - selected card, new gameState", data.data)
-	return data.data
-}
-
-const fetchPassCards = async () => {
-	console.log(" passing cards args")
-	const resp = await fetch(`${dbUrl}/gameState/passCards/${gameId}`)
-	const data = await resp.json();
-	return data.data
-}
-
-const fetchPlayCard = async () => {
-	console.log(" playing card")
-	const resp = await fetch(`${dbUrl}/gameState/playCard/${gameId}/${user}`)
-	const data = await resp.json();
-	return data.data
-}
-
-
-export const userHand = derived(gS, async ($gS) => {
-	const current = await $gS
-	// console.log('userhand store', current.players[user].hand )
-	return [ ...current.players[user].hand ]
-});
-export const westHand = derived(gS, async ($gS) => {
-	const current = await $gS
-	// console.log('westhand store', current.players[(user + 1) % 4].hand)
-	return [ ...current.players[(user + 1) % 4].hand ]
-});
-export const northHand = derived(gS, async ($gS) => {
-	const current = await $gS
-	// console.log('northhand store', current.players[(user + 2) % 4].hand)
-	return [ ...current.players[(user + 2) % 4].hand ]
-});
-export const eastHand = derived(gS, async ($gS) => {
-	const current = await $gS
-	// console.log('easthand store', current.players[(user + 3) % 4].hand)
-	return [ ...current.players[(user + 3) % 4].hand ]
-});
-export const playedCards = derived(gS, async ($gS) => {
-	const current = await $gS
-	console.log('playedCards store', current.firstPlayer, current.playedCards.map(c=>c.id))
-	return { 
-		first: current.firstPlayer,
-		cards: [...current.playedCards.map(c=>c.id)]
-	}
-})
+	const result = { ...data.data };
+	console.log(" gS", result);
+	return result;
+};
