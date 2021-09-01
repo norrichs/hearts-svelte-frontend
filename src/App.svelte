@@ -2,6 +2,7 @@
 	import { Router, Route, Link } from "svelte-routing";
 	import Lobby from "./pages/Lobby.svelte";
 	import Game from "./pages/Game.svelte";
+	import {} from 'svelte/easing'
 	// import SandBox from "./pages/SandBox.svelte";
 
 	export let url = "";
@@ -39,7 +40,7 @@
 		--redsuit-color: rgb(143, 2, 2);
 		--blacksuit-color: rgb(0, 10, 3);
 		--select-distance: -0.4;
-		--select-speed: 600ms;
+		--select-speed: 450ms;
 		--select-scale: 1.0;
 		--select-rotation: 0deg;
 		--header-height: 100px;

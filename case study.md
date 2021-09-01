@@ -51,7 +51,11 @@ Since the store is synced with the database, updates are asynchronous, and so th
 
 However, the await block, when resolved, removes the child element from the DOM and re-inserts it, which means css transitions are not rendered.  
 
-Instead, I use a standard variable declared with the 'let' keyword, and reassign the variable using the await keyword, all within the ```html 
+Instead, I use a standard variable declared with the 'let' keyword, and reassign the variable using the await keyword, all within the 
+```html 
 	<script> 
 ``` 
 area.  Elements rendered using this variable are kept updated, but are not removed and re-inserted into the DOM.
+
+### Async Store issues
+Publish a REPL showing a continuously updating gameState provider

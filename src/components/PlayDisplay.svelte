@@ -2,7 +2,7 @@
 	import { onMount } from "svelte";
 
 	import CardFront from "../components/CardFront.svelte";
-	import { played } from "../stores2.js";
+	import { played } from "../stores3.js";
 	// export let played;
 	let order = [0, 1, 2, 3];
 	const directions = ["south", "west", "north", "east"];
@@ -18,6 +18,9 @@
 				{(place + $played.first) % 4}
 				<div class="card-place">
 					{#if $played.cards[place]}
+						<div class="indicator">
+							{$played.cards[place]}
+						</div>
 						<CardFront cardValue={$played.cards[place]} />
 					{/if}
 				</div>
@@ -78,6 +81,21 @@
 		height: var(--card-height);
 		width: calc(var(--card-height) * var(--card-ratio));
 		background-color: yellowgreen;
+		position: relative;
+	}
+	.indicator{
+		width: 40px;
+		height: 40px;
+		border-radius: 50%;
+		background-color: rgba(200,100,200,1);
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		display: grid;
+		place-items: center;
+		font-size: 1em;
+		transform-origin: 50% 50%;
+		z-index: 20;
 	}
 	.east .card-place,
 	.west .card-place {

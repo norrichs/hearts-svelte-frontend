@@ -1,8 +1,9 @@
 <script>
 	import HandDisplay from "../components/HandDisplay.svelte";
 	import PlayDisplay from "../components/PlayDisplay.svelte";
-	import { playedCards } from "../stores";
-	import { time, gS, gameId, played } from "../stores2.js";
+	import TrickPile from "../components/TrickPile.svelte";
+	// import { playedCards } from "../stores";
+	import { gS, gameId, played } from "../stores3.js";
 
 	export let user;
 	let obscuredMode = true;
@@ -25,13 +26,13 @@
 			`${dbUrl}/gameState/selectCard/${$gameId}/${user}/${cardId}`
 		);
 		const data = await resp.json();
-		return data.data;
+		gS.syncState(data.data);
 	};
 	const handlePass = async () => {
 		console.log("  pass these cards", $gS.players[user].passes);
 		const resp = await fetch(`${dbUrl}/gameState/passCards/${$gameId}`);
 		const data = await resp.json();
-		return data.data;
+		gS.syncState(data.data);
 	};
 	const handlePlay = async () => {
 		console.log("play this card", $gS.players[user].passes);
@@ -39,57 +40,66 @@
 			`${dbUrl}/gameState/playCard/${$gameId}/${user}`
 		);
 		const data = await resp.json();
-		return data.data;
+		gS.syncState(data.data);
 	};
 	const handleReveal = () => {
 		obscuredMode = obscuredMode ? false : true;
+	};
+	const handleAccept = () => {
+		console.log(
+			'accept'
+		)
 	}
 </script>
 
 {#if $gS === null}
-<div>waiting</div>
+	<div>waiting</div>
 {:else}
-<main class="game-main">
-	<section class="play-area">
-		<PlayDisplay />
-	</section>
-	<section class="west hand-area">
-		<div class="hand-wrapper">
-			<HandDisplay
-			{handleSelect}
-			cards={$gS.players[1].hand}
-			{obscuredMode}
-			/>
-		</div>
-	</section>
-	<section class="north hand-area">
-		<div class="hand-wrapper">
+	<main class="game-main">
+		<section class="play-area">
+			<PlayDisplay />
+		</section>
+		<section class="west hand-area">
+			<div class="hand-wrapper">
+				<HandDisplay
+					{handleSelect}
+					cards={$gS.players[1].hand}
+					{obscuredMode}
+				/>
+			</div>
+		</section>
+		<section class="north hand-area">
+			<div class="hand-wrapper">
 				<HandDisplay
 					{handleSelect}
 					cards={$gS.players[2].hand}
 					{obscuredMode}
-					/>
-				</div>
-			</section>
-			<section class="east hand-area">
-				<div class="hand-wrapper">
-					<HandDisplay
+				/>
+			</div>
+		</section>
+		<section class="east hand-area">
+			<div class="hand-wrapper">
+				<HandDisplay
 					{handleSelect}
 					cards={$gS.players[3].hand}
 					{obscuredMode}
-					/>
+				/>
 			</div>
 		</section>
 		<section class="south hand-area">
 			<div class="hand-wrapper">
+				<button 
+					class='game-button'
+					class:shown={$gS.playedCards.length===4}
+					on:click={handleAccept}>Accept</button>
 				<button
 					class="game-button"
 					class:shown={$gS.players[user].passes.length === 1 &&
 						$gS.phase === "trick"}
 					on:click={handlePlay}>Play Card</button
-					>
+				>
 				<button
-				class="game-button"
+					class="game-button"
 					class:shown={$gS.players[user].passes.length === 3 &&
 						$gS.phase === "pass"}
 					on:click={handlePass}>Pass</button
@@ -98,11 +108,14 @@
 					{handleSelect}
 					cards={$gS.players[0].hand}
 					obscuredMode={false}
-					/>
+				/>
 			</div>
 		</section>
+		<aside class="trick-area">
+			<TrickPile {obscuredMode} user="0" />
+		</aside>
 		<aside class="debug-area">
-			<div>Time - {$time}</div>
+			<!-- <div>Time - {$time}</div> -->
 			<button on:click={logState}>Log State</button>
 			<button on:click={handleReveal}>Reveal opponents</button>
 			<div>Game: {$gameId}</div>
@@ -114,10 +127,24 @@
 				<span>
 					played: {$gS.playedCards.map(
 						(c) => c.id
-						)}{$played.cards.map((c) => c.id)}
+					)}{$played.cards.map((c) => c.id)}
 				</span>
 			</div>
-			<div>Led: {$played.cards.length > 0 ? $played.cards[0][0] : ''}</div>
+			<div>
+				Led: {$played.cards.length > 0 ? $played.cards[0][0] : ""}
+			</div>
+			<div>Turn: {$gS.activePlayer}</div>
+			<div>
+				Score: {$gS.maxScore}
+				{#each $gS.players as player, i}
+					<div>
+						{i}-
+						<span>{player.gameScore}</span>
+						<span>{player.handScore}</span>
+						<span>{player.tricks.map((c) => c.id)}</span>
+					</div>
+				{/each}
+			</div>
 		</aside>
 	</main>
 {/if}
@@ -131,12 +158,12 @@
 		overflow: hidden;
 		display: grid;
 		--hand-height: calc(var(--card-height) + 10px);
-		grid-template-rows: var(--hand-height) auto var(--hand-height);
+		/* grid-template-rows: var(--hand-height) auto var(--hand-height);
 		grid-template-columns: var(--hand-height) auto var(--hand-height);
 		grid-template-areas:
 		" hw  hn  he  "
 			" hw  pa  he "
-			" i1  hs  i2  ";
+			" i1  hs  i2  "; */
 	}
 	.game-main {
 		grid-template-columns: 10px 300px 1fr 3fr 10px 3fr 1fr 300px 10px;
@@ -147,8 +174,8 @@
 			" .  .  .  pa pa pa .  .  . "
 			" .  hw .  pa pa pa .  he . "
 			" .  .  .  pa pa pa .  .  . "
-			" .  i1 i1 .  hs .  i2 i2 . "
-			" .  i1 i1 .  .  .  i2 i2 . ";
+			" .  i1 i1 .  hs .  t2 t2 t2"
+			" .  i1 i1 .  .  .  t2 t2 t2";
 	}
 	.game-main > {
 		border: 1px solid black;

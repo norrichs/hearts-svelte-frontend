@@ -1,4 +1,4 @@
-import { readable, writable, derived } from "svelte/store";
+import { readable, derived } from "svelte/store";
 
 let gameIdLocal;
 
@@ -15,15 +15,25 @@ export const time = readable(null, (set) => {
 	return () => clearInterval(interval);
 });
 
+
+
+
+
 export const gS = readable(null, async (set) => {
 	set(await startNewGame());
 
 	const interval = setInterval(async () => {
-		set(await fetchGameState(gameId));
-	}, 500);
+		set(await pollGameState(gameId));
+	}, 100);
 
 	return () => clearInterval(interval);
 });
+
+
+
+
+
+
 
 export const gameId = derived(gS, $gS => {
 	if($gS!==null) return $gS._id
@@ -38,30 +48,6 @@ export const played = derived(gS, ($gS) => {
 	}
 });
 
-// export const played = derived(gS, async ($gS) => {
-// 	const current = await $gS
-// 	console.log('playedCards store', current.firstPlayer, current.playedCards.map(c=>c.id))
-// 	let result
-// 	if(current.playedCards.length === 0) result = null;
-// 	else result = {
-// 		first: current.firstPlayer,
-// 		cards: [...current.playedCards.map(c=>c.id)]
-// 	}
-// 	return result
-// })
-
-// export const ready = derived(gS, async ($gS) => {
-// 	const current = await $gS
-// 	console.log('ready store')
-// 	let ready = {pass: false, play: false}
-// 	if(current.phase === 'pass'){
-// 		ready.pass = current.players[user].passes.length === 3 ? true : false;
-// 	}else if (current.phase === 'trick'){
-// 		ready.play = current.players[user].passes.length === 1 ? true : false;
-// 	}
-// 	console.log('ready state', ready)
-// 	return ready
-// })
 
 const startNewGame = async () => {
 	let newGame = await fetchNewGame();
@@ -69,21 +55,6 @@ const startNewGame = async () => {
 	newGame = await fetchDealtHand();
 	return newGame;
 };
-
-// const fetchPassCards = async () => {
-// 	console.log(" passing cards args")
-// 	const resp = await fetch(`${dbUrl}/gameState/passCards/${gameId}`)
-// 	const data = await resp.json();
-// 	return data.data
-// }
-
-// const fetchSelectCard = async (user, cardId) => {
-// 	console.log(" selecting card args", gameId, user, cardId)
-// 	const resp = await fetch(`${dbUrl}/gameState/selectCard/${gameId}/${user}/${cardId}`)
-// 	const data = await resp.json();
-// 	// console.log(" - selected card, new gameState", data.data)
-// 	return data.data
-// }
 
 const fetchNewGame = async () => {
 	console.log(" starting new game");
@@ -101,11 +72,11 @@ const fetchDealtHand = async () => {
 	return data.data;
 };
 
-const fetchGameState = async () => {
+const pollGameState = async () => {
 	// console.log(' refreshing game state')
 	const resp = await fetch(`${dbUrl}/gameState/getState/${gameIdLocal}`);
 	const data = await resp.json();
 	const result = { ...data.data };
-	console.log(" gS", data);
+	console.log(" gS", data.data);
 	return result;
 };

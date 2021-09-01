@@ -111,11 +111,11 @@
 		background-color: transparent;
 	}
 	.card-front {
-		font-size: calc( var(--card-width) * 0.15);
+		font-size: calc(var(--card-width) * 0.15);
 		height: var(--card-height);
 		background-color: var(--cardfront-background);
 		border-radius: var(--card-border-radius);
-		display: flex; 
+		display: flex;
 		flex-direction: column;
 		justify-content: space-between;
 	}
@@ -141,8 +141,8 @@
 		" s8 s6 b2 b2 .  " 1fr
 		" .  .  b2 b2 .  " 1fr / 1fr 1fr 1fr 1fr 1fr; */
 
-		width: calc( var(--card-width) * 0.6);
-		height: calc( var(--card-width) * 0.6);
+		width: calc(var(--card-width) * 0.6);
+		height: calc(var(--card-width) * 0.6);
 		display: grid;
 		grid-template-rows: 1fr 1fr 0.75fr 1fr 1fr;
 		grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
