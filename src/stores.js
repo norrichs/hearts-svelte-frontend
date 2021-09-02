@@ -7,7 +7,7 @@ let gameIdLocal;
 const localUrl = 'http://localhost:4500'
 const deployedUrl = "https://hearts-backend.herokuapp.com";
 
-export const url = localUrl;
+export const url = deployedUrl;
 const user = 0;
 
 // export const time = readable(null, (set) => {
