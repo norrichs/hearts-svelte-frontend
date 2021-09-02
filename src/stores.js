@@ -7,7 +7,7 @@ let gameIdLocal;
 const localUrl = 'http://localhost:4500'
 const deployedUrl = "https://hearts-backend.herokuapp.com";
 
-export const url = localUrl;
+export const url = deployedUrl;
 const user = 0;
 
 export const passMap = [
@@ -19,7 +19,7 @@ export const passMap = [
 
 
 
-let delay = 500;
+let delay = 1000;
 let debug = null // null, 'moonshot'
 
 // const delay = writable(5000)
