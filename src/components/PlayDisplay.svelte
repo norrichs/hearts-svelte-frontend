@@ -17,9 +17,6 @@
 			<div class={directions[(place + $played.first) % 4]}>
 				<div class="card-place">
 					{#if $played.cards[place]}
-						<!-- <div class="indicator">
-							{$played.cards[place]}
-						</div> -->
 						<CardFront cardValue={$played.cards[place]} />
 					{/if}
 				</div>
@@ -34,9 +31,9 @@
 					class="turn-arrow"
 					style={"transform: rotateZ(" +
 						(order[$gS.activePlayer] * 90 + 90) +
-						"deg );"}
+						"deg ); "}
 				>
-					>
+					<div></div>
 				</div>
 			{:else if $gS.phase === "hand-complete"}
 				Hand is complete
@@ -50,11 +47,34 @@
 <style>
 	.turn-arrow {
 		/* border: 1px solid black; */
-		font-size: 3em;
+		/* width: calc( var(--card-width) * 0.9);
+		height: calc( var(--card-width) * 0.9); */
+		width: 100px;
+		height: 80px;
+
+		padding-left: 30px;
+		background-color: dimgrey;
+		border-radius: 60px;
+		font-size: 4em;
+		color: tomato;
+		transition: 400ms;
+		display: grid;
+		place-items: center;
+		overflow: hidden;
+		box-sizing: border-box;
+	}
+	.turn-arrow>div{
+		width: 0;
+		height: 0;
+		
+		border-right: 50px solid transparent;
+		border-top: 20px solid transparent;
+		border-bottom: 20px solid transparent;
+		border-left: 50px solid firebrick;
 	}
 	.play-display {
-		background-color: lightskyblue;
-		margin: 20px;
+		/* background-color: lightskyblue; */
+		/* margin: 20px; */
 		display: grid;
 		grid-template-rows:
 			var(--card-height)
@@ -96,20 +116,7 @@
 		background-color: yellowgreen;
 		position: relative;
 	}
-	.indicator {
-		width: 40px;
-		height: 40px;
-		border-radius: 50%;
-		background-color: rgba(200, 100, 200, 1);
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		display: grid;
-		place-items: center;
-		font-size: 1em;
-		transform-origin: 50% 50%;
-		z-index: 20;
-	}
+
 	.east .card-place,
 	.west .card-place {
 		transform: rotateZ(90deg);

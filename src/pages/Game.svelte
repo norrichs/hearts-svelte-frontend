@@ -14,8 +14,6 @@
 	const logState = () => console.log("current gameState:", $gS);
 	// Reactive variables
 
-
-
 	// Lifecycle
 	const unsubscribe = () => {
 		gS.subscribe((gS) => {
@@ -104,7 +102,7 @@
 				<button
 					class="game-button"
 					class:shown={$gS.phase === "hand-complete"}
-					on:click={handleDealHand}>Done!.  Deal next...</button
+					on:click={handleDealHand}>Done!. Deal next...</button
 				>
 				<button
 					class="game-button"
@@ -140,8 +138,22 @@
 		<aside class="trick-area">
 			<TrickPile {obscuredMode} user="0" />
 		</aside>
-		<aside class="debug-area">
-			<!-- <div>Time - {$time}</div> -->
+		<aside class="info-area">
+			<div><span>Play to:</span><span>{$gS.winScore}</span></div>
+			<div class="score-grid">
+				<div class="score-title">Player</div>
+				<div class="score-title">Score</div>
+				<div class="score-title">Hand</div>
+				<div class="score-title">Tricks</div>
+				{#each $gS.players as p}
+					<div>{p.name}</div>
+					<div>{p.gameScore}</div>
+					<div>{p.handScore}</div>
+					<div>{p.tricks.length / 4}</div>
+				{/each}
+			</div>
+		</aside>
+		<!-- <aside class="debug-area">
 			<div>backend url : {url}</div>
 			<button on:click={logState}>Log State</button>
 			<button on:click={handleReveal}>Reveal opponents</button>
@@ -175,29 +187,52 @@
 					</div>
 				{/each}
 			</div>
-		</aside>
+		</aside> -->
 	</main>
 {/if}
 
 <style>
+	.info-area {
+		grid-area: i1;
+	}
+	.score-grid {
+		border: 5px solid black;
+		max-width: calc(100% - 50px);
+		display: grid;
+		grid-template-columns: repeat(4, auto);
+		grid-template-rows: repeat(4, auto);
+		gap: 5px;
+		background-color: dimgray;
+		grid-auto-flow: row;
+		/* grid-template-areas:
+			"nt gt ht tt"
+			"n0 g0 h0 t0"
+			"n1 g1 h1 t1"
+			"n2 g2 h2 t2"
+			"n3 g3 h3 t30" */
+	}
+	.score-grid > div {
+		background-color: white;
+		padding: 5px;
+		/* color:dodgerblue; */
+	}
+	.score-title {
+		color: firebrick;
+	}
 	.game-main {
 		margin: 0 auto;
 		box-sizing: border-box;
+		min-height: 820px;
+		min-width: 820px;
 		height: 99vh;
-		width: 99vw;
+		width: 98vw;
 		overflow: hidden;
 		display: grid;
 		--hand-height: calc(var(--card-height) + 10px);
-		/* grid-template-rows: var(--hand-height) auto var(--hand-height);
-		grid-template-columns: var(--hand-height) auto var(--hand-height);
-		grid-template-areas:
-		" hw  hn  he  "
-			" hw  pa  he "
-			" i1  hs  i2  "; */
 	}
 	.game-main {
-		grid-template-columns: 10px 300px 1fr 3fr 10px 3fr 1fr 300px 10px;
-		grid-template-rows: 10px 300px 3fr 10px 4fr 300px 10px;
+		grid-template-columns: 10px 3fr 1fr 200px 10px 200px 1fr 3fr 10px;
+		grid-template-rows: 10px 3fr 200px 10px 200px 3fr 10px;
 		grid-template-areas:
 			" .  .  .  .  .  .  .  .  . "
 			" .  .  .  .  hn .  .  .  . "
@@ -206,9 +241,6 @@
 			" .  .  .  pa pa pa .  .  . "
 			" .  i1 i1 .  hs .  t2 t2 t2"
 			" .  i1 i1 .  .  .  t2 t2 t2";
-	}
-	.game-main > {
-		border: 1px solid black;
 	}
 
 	.hand-area.north {
@@ -231,14 +263,6 @@
 		justify-content: flex-end;
 		background-color: lightsteelblue;
 	}
-	/* .info-area {
-		grid-area: i2;
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		justify-content: flex-end;
-		background-color: lightsteelblue;
-	} */
 	button.game-button.shown {
 		visibility: visible;
 		bottom: 100px;
@@ -264,47 +288,47 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		border: 1px solid magenta;
 		width: 100%;
 		height: 100%;
 	}
-	.north .hand-wrapper {
-		transform: translateY(calc(0px - var(--hand-height) * 0.65))
-			rotateZ(180deg);
-	}
-	.east .hand-wrapper {
-		transform: translateX(calc(var(--hand-height) * 0.65)) rotateZ(-90deg);
-	}
-	.west .hand-wrapper {
-		transform: translateX(calc(0px - var(--hand-height) * 0.65))
-			rotateZ(90deg);
-	}
-	.south .hand-wrapper {
-		transform: translateY(calc(var(--hand-height) * 0.65));
-	}
 	.hand-area {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		/* position: relative; */
-		background-color: sandybrown;
+		/* display: flex;
+		justify-content: flex-end;
+		align-items: flex-end; */
+		--hand-offset: 150px;
+		position: relative;
+		/* background-color: red; */
 	}
 	.hand-wrapper {
-		background-color: blue;
+		/* background-color: blue; */
 		height: 100%;
 		width: 1px;
 
-		/* position: absolute; */
-		top: 0;
-		left: 50%;
-
+		position: absolute;
 		display: flex;
 		justify-content: center;
 		align-items: center;
 	}
+	.north .hand-wrapper {
+		bottom: var(--hand-offset);
+		transform: rotateZ(180deg);
+	}
+	.east .hand-wrapper {
+		left: var(--hand-offset);
+		transform: rotateZ(-90deg);
+	}
+	.west .hand-wrapper {
+		right: var(--hand-offset);
+		transform: rotateZ(90deg);
+	}
+	.south .hand-wrapper {
+		top: var(--hand-offset);
+	}
+
 	.trick-area {
 		grid-area: t2;
 		background-color: burlywood;
 		border: 4px solid black;
+		padding: 10px;
 	}
 </style>
