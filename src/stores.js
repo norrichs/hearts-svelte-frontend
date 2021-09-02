@@ -7,37 +7,35 @@ let gameIdLocal;
 const localUrl = 'http://localhost:4500'
 const deployedUrl = "https://hearts-backend.herokuapp.com";
 
-export const url = deployedUrl;
+export const url = localUrl;
 const user = 0;
 
-// export const time = readable(null, (set) => {
-// 	set(new Date());
-
-// 	const interval = setInterval(() => {
-// 		set(new Date());
-// 	}, 1000);
-
-// 	return () => clearInterval(interval);
-// });
+export const passMap = [
+	{ message: "no pass" },
+	{ message: "pass across" },
+	{ message: "pass right" },
+	{ message: "pass left" },
+];
 
 
 
 let delay = 500;
+let debug = null // null, 'moonshot'
 
 // const delay = writable(5000)
 
-const createGameState = (delay) => {
+const createGameState = (delay, debug) => {
 	console.log('createGameState', delay)
 	const { subscribe, set, update } = writable(null, async (set,tick=delay)=>{
 		console.log('set', delay)
-		set(await startNewGame())
+		set(await startNewGame(debug))
 		
 		const interval = setInterval( async () => {
 			set( await pollGameState(gameIdLocal))
 		}, tick)
 
 		return ()=>clearInterval(interval)
-	}, delay)
+	}, delay, debug)
 
 
 	return {
@@ -50,7 +48,7 @@ const createGameState = (delay) => {
 	}
 }
 
-export const gS = createGameState(delay)
+export const gS = createGameState(delay, debug)
 
 {
 // export const gS = writable(null, async (set) => {
@@ -130,12 +128,24 @@ export const played = derived(gS, ($gS) => {
 });
 
 
-const startNewGame = async () => {
+const startNewGame = async (debug) => {
 	let newGame = await fetchNewGame();
 	gameIdLocal = newGame._id;
-	newGame = await fetchDealtHand();
+	if(!debug){
+		console.log('no debug state')
+		newGame = await fetchDealtHand();
+	}else{
+		console.log('loading debug file: ',debug)
+		newGame = await fetchDebugGame(debug);
+	}
 	return newGame;
 };
+
+const fetchDebugGame = async (debug )=> {
+	const resp = await fetch(`${url}/gameState/debug/${gameIdLocal}/${debug}`);
+	const data = await resp.json();
+	return data.data
+}
 
 const fetchNewGame = async () => {
 	console.log(" starting new game");

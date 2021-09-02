@@ -2,7 +2,7 @@
 	import { onMount } from "svelte";
 
 	import CardFront from "../components/CardFront.svelte";
-	import { played } from "../stores.js";
+	import { played, gS, passMap } from "../stores.js";
 	// export let played;
 	let order = [0, 1, 2, 3];
 	const directions = ["south", "west", "north", "east"];
@@ -15,30 +15,43 @@
 	<div class="play-display">
 		{#each order as place}
 			<div class={directions[(place + $played.first) % 4]}>
-				{(place + $played.first) % 4}
 				<div class="card-place">
 					{#if $played.cards[place]}
-						<div class="indicator">
+						<!-- <div class="indicator">
 							{$played.cards[place]}
-						</div>
+						</div> -->
 						<CardFront cardValue={$played.cards[place]} />
 					{/if}
 				</div>
 			</div>
 		{/each}
+
 		<div class="play-info">
-			{#if $played.cards.length > 0}
-				{$played.first}
-				{$played.cards}
-			{:else}
-				No played
+			{#if $gS.phase === "pass"}
+				<div>{passMap[$gS.handNum % 4].message}</div>
+			{:else if $gS.phase === "trick"}
+				<div
+					class="turn-arrow"
+					style={"transform: rotateZ(" +
+						(order[$gS.activePlayer] * 90 + 90) +
+						"deg );"}
+				>
+					>
+				</div>
+			{:else if $gS.phase === "hand-complete"}
+				Hand is complete
+			{:else if $gS.phase === "game-complete"}
+				Game is complete
 			{/if}
-			<!-- {gameStatus} -->
 		</div>
 	</div>
 {/if}
 
 <style>
+	.turn-arrow {
+		/* border: 1px solid black; */
+		font-size: 3em;
+	}
 	.play-display {
 		background-color: lightskyblue;
 		margin: 20px;
@@ -83,11 +96,11 @@
 		background-color: yellowgreen;
 		position: relative;
 	}
-	.indicator{
+	.indicator {
 		width: 40px;
 		height: 40px;
 		border-radius: 50%;
-		background-color: rgba(200,100,200,1);
+		background-color: rgba(200, 100, 200, 1);
 		position: absolute;
 		top: 50%;
 		left: 50%;

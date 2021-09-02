@@ -3,7 +3,7 @@
 	import PlayDisplay from "../components/PlayDisplay.svelte";
 	import TrickPile from "../components/TrickPile.svelte";
 	import { navigate } from "svelte-routing";
-	import { gS, gameId, played, url } from "../stores.js";
+	import { gS, gameId, played, url, passMap } from "../stores.js";
 	import { onDestroy } from "svelte";
 
 	export let user;
@@ -14,12 +14,7 @@
 	const logState = () => console.log("current gameState:", $gS);
 	// Reactive variables
 
-	const passMap = [
-		{ message: "pass across" },
-		{ message: "pass left" },
-		{ message: "pass right" },
-		{ message: "no pass" },
-	];
+
 
 	// Lifecycle
 	const unsubscribe = () => {
@@ -109,7 +104,7 @@
 				<button
 					class="game-button"
 					class:shown={$gS.phase === "hand-complete"}
-					on:click={handleDealHand}>The Hand Is Done!</button
+					on:click={handleDealHand}>Done!.  Deal next...</button
 				>
 				<button
 					class="game-button"
@@ -118,11 +113,11 @@
 						navigate("/", { replace: false });
 					}}>Somebody Won!</button
 				>
-				<button
+				<!-- <button
 					class="game-button"
 					class:shown={$gS.playedCards.length === 4}
 					on:click={handleAccept}>Accept</button
-				>
+				> -->
 				<button
 					class="game-button"
 					class:shown={$gS.players[user].passes.length === 1 &&
@@ -152,6 +147,7 @@
 			<button on:click={handleReveal}>Reveal opponents</button>
 			<button on:click={handleSurrenderHand}>Surrender Hand</button>
 			<div>Game: {$gameId}</div>
+			<div>Hand: {$gS.handNum}</div>
 			<div>phase: {$gS.phase}</div>
 			<div>
 				<span>
@@ -166,16 +162,16 @@
 			<div>
 				Led: {$played.cards.length > 0 ? $played.cards[0][0] : ""}
 			</div>
-			<div>Turn: {$gS.activePlayer}</div>
+			<div>Active Player: {$gS.activePlayer}</div>
 			<div>{$gS.heartsBroken ? "💔" : "⍉"}</div>
 			<div>
 				Score: {$gS.maxScore}
 				{#each $gS.players as player, i}
 					<div>
-						{i}-
-						<span>{player.gameScore}</span>
-						<span>{player.handScore}</span>
-						<span>{player.tricks.map((c) => c.id)}</span>
+						<span>Player: {i} </span>
+						<span>G[{player.gameScore}]</span>
+						<span>H[{player.handScore}]</span>
+						<span> # {player.tricks.length / 4}</span>
 					</div>
 				{/each}
 			</div>
