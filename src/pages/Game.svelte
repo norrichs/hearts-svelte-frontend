@@ -3,7 +3,7 @@
 	import PlayDisplay from "../components/PlayDisplay.svelte";
 	import TrickPile from "../components/TrickPile.svelte";
 	import { navigate } from "svelte-routing";
-	import { gS, gameId, played, url, passMap } from "../stores.js";
+	import { gS, gameId, user, played, url, passMap } from "../stores.js";
 	import { onDestroy } from "svelte";
 
 	export let user;

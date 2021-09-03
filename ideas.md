@@ -63,5 +63,22 @@ Game Decision Tree
 			passCards()		// passCards exchanges selections between hands
 
 
-function pass()
-	IF 
+### Lobby user flow
+1. Enter loby
+2. Current listing displayed
+3. Open games are indicated (not started).
+4. Computer players are clickable.  
+	- Opens modal to join game and provide name
+	- If first user, modal button is 'Start' and 'Wait'
+	- If subsequent user, modal button is 'OK'
+5. Joining a game as first human player 
+	- reveals 'start' button on game listing
+	- assigns gS.mainUser
+6. Joining as subsequent user
+	- shows 'Waiting for game to start' message
+7. All changes are immediately synced to database
+8. When mainUser clicks 'Start', navigate to Game.svelte with appropriate Store values
+	- gameId
+	- user
+	- avatar ?
+	
