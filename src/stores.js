@@ -8,7 +8,7 @@ const localUrl = 'http://localhost:4500'
 const deployedUrl = "https://hearts-backend.herokuapp.com";
 
 export const url = localUrl;
-let user = 0;
+// let user = 0;
 
 export const passMap = [
 	{ message: "no pass" },
@@ -20,14 +20,16 @@ export const passMap = [
 
 
 export const userParams = writable({
-	name: null,
+	username: 'dude',
 	playerNumber: 0,
 	gameId: null,
 	winCount: 0,
 
 })
 
-export const user = 
+export const user = derived(userParams, $userParams => {
+	return $userParams.username;
+})
 
 let delay = 1000;
 let debug = null // null, 'moonshot'

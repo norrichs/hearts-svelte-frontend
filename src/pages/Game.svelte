@@ -3,10 +3,10 @@
 	import PlayDisplay from "../components/PlayDisplay.svelte";
 	import TrickPile from "../components/TrickPile.svelte";
 	import { navigate } from "svelte-routing";
-	import { gS, gameId, user, played, url, passMap } from "../stores.js";
+	import { gS, gameId,  played, url, passMap, userParams } from "../stores.js";
 	import { onDestroy } from "svelte";
 
-	export let user;
+
 	let obscuredMode = true;
 	// const localUrl = "http://localhost:4500";
 	// const deployedUrl = "https://hearts-backend.herokuapp.com"
@@ -24,23 +24,23 @@
 
 	// Handler Functions
 	const handleSelect = async (cardId) => {
-		console.log(" selecting card", $gameId, user, cardId);
+		console.log(" selecting card", $gameId, $userParams.playerNumber, cardId);
 		const resp = await fetch(
-			`${url}/gameState/selectCard/${$gameId}/${user}/${cardId}`
+			`${url}/gameState/selectCard/${$gameId}/${$userParams.playerNumber}/${cardId}`
 		);
 		const data = await resp.json();
 		gS.syncState(data.data);
 	};
 	const handlePass = async () => {
-		console.log("  pass these cards", $gS.players[user].passes);
+		console.log("  pass these cards", $gS.players[$userParams.playerNumber].passes);
 		const resp = await fetch(`${url}/gameState/passCards/${$gameId}`);
 		const data = await resp.json();
 		gS.syncState(data.data);
 	};
 	const handlePlay = async () => {
-		console.log("play this card", $gS.players[user].passes);
+		console.log("play this card", $gS.players[$userParams.playerNumber].passes);
 		const resp = await fetch(
-			`${url}/gameState/playCard/${$gameId}/${user}`
+			`${url}/gameState/playCard/${$gameId}/${$userParams.playerNumber}`
 		);
 		const data = await resp.json();
 		gS.syncState(data.data);
@@ -118,13 +118,13 @@
 				> -->
 				<button
 					class="game-button"
-					class:shown={$gS.players[user].passes.length === 1 &&
+					class:shown={$gS.players[$userParams.playerNumber].passes.length === 1 &&
 						$gS.phase === "trick"}
 					on:click={handlePlay}>Play Card</button
 				>
 				<button
 					class="game-button"
-					class:shown={$gS.players[user].passes.length === 3 &&
+					class:shown={$gS.players[$userParams.playerNumber].passes.length === 3 &&
 						$gS.phase === "pass"}
 					on:click={handlePass}>Pass</button
 				>
@@ -136,7 +136,7 @@
 			</div>
 		</section>
 		<aside class="trick-area">
-			<TrickPile {obscuredMode} user="0" />
+			<TrickPile {obscuredMode} user={$userParams.playerNumber} />
 		</aside>
 		<aside class="info-area">
 			<div><span>Play to:</span><span>{$gS.winScore}</span></div>

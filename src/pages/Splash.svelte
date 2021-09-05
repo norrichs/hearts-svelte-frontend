@@ -26,7 +26,7 @@
 			<li><a href="https://github.com/norrichs/hearts-svelte-frontend">Frontend Github</a></li>
 			<li><a href="https://norrichs.com">My Portfolio</a></li>
 		</ul>
-		<Link to="/lobby/"><button>Join a Game</button></Link>
+		<Link to="/signin/"><button>Join a Game</button></Link>
 	</section>
 </main>
 

@@ -1,18 +1,38 @@
 <script>
-	import { url,  } from "../stores.js";
+	import { url, userParams, user, gameId } from "../stores.js";
 	import { onMount } from "svelte";
-	import {Link, navigate } from "svelte-routing"
+	import { Link, navigate } from "svelte-routing";
 
 	let gamesList = null;
 	let joined = false;
+	let showModal = false;
+	let joinedGameId = null;
+	let isMultiplayer = false;
 
+	const startSinglePlayer = () => {};
 
+	const handleClickPlayer = (gameId, user) => {
+		const game = gamesList[gamesList.map(g=>g._id).indexOf(gameId)]
 
-
-
-	const startSinglePlayer = () => {
+		console.log(game.players.map(p=>p.playerType))
+		if(game.players.map(p=>p.playerType).includes('human')){
+			isMultiplayer = true;
+		}
+		// If already joined game...
+		// Need a different model to deal with assigning unique user id's to people...
 		
+
+		$userParams.gameId = gameId
+		$userParams.playerNumber = user
+		showModal = true;
 	}
+
+	const handleAddToGame = async (gameId, name, user) => {
+		await fetch(`${url}/gameState/updateGameState/${gameId}/${user}/${name}/${isMultiplayer ? user : 'x'}`)
+		gamesList = await refreshGamesList();
+		showModal = false;
+	}
+
 
 	const refreshGamesList = async () => {
 		const resp = await fetch(`${url}/gameState/listGames`);
@@ -30,60 +50,92 @@
 		}
 	};
 	const handleClear = async () => {
-
-		let confirmed = confirm("Really end all in-progress games?")
-		if(confirmed){
+		let confirmed = confirm("Really end all in-progress games?");
+		if (confirmed) {
 			const resp = await fetch(`${url}/gameState/clear`);
-			gamesList = await refreshGamesList()
+			gamesList = await refreshGamesList();
 		}
 	};
+
+	const handleStartGame = (gameId) => {
+		navigate("/game")
+
+	}
 	onMount(async () => {
+		console.log("lobby mounted, user", $userParams)
 		gamesList = await refreshGamesList();
+
 	});
 </script>
 
-
-
-
-
-
 <main>
-	<h2>Games</h2>
-	<button on:click={handleClear}>End All Games</button>
-	<button on:click={fetchNewGame}>Add game</button>
-	<button on:click={startSinglePlayer}>Start Single Player Game</button>
-	<ul class="game-listing">
-		{#if gamesList !== null}
-			{#each gamesList as game}
-				<li class="listed-game">
-					<div 
-						class="players"
-						class:open={game.phase==='open'}
-					>
-						{#each game.players as p}
-							<div 
-								class={p.playerType}
-								
-							>{p.name}</div>
-						{/each}
-					</div>
-					<button on:click={console.log('start a game')}>Start!</button>
-				</li>
-			{/each}
-		{:else}
-			<li>waiting</li>
-		{/if}
-	</ul>
+	
+	<section class='modal-background' class:showModal>
+		<div class='modal'>
+			<h2>Create your player to join</h2>
+			<div>{$user + "-" + $userParams.gameId}</div>
+			{#if !isMultiplayer}
+				<button>Start the game!</button>
+			{:else}
+				<div>Multiplayer</div>
+			{/if}
+			<button on:click={()=>{
+				handleAddToGame($userParams.gameId ,$user, $userParams.playerNumber)
+				showModal = false;
+			}}>Wait for more players</button>
+			
+			
+		</div>	
+	</section>
+
+
+	<header>
+		<h1>Lobby</h1>
+		<h1>Logged in as: {$user}</h1>
+	</header>
+
+
+	<section>
+		<h2>Games</h2>
+		<button on:click={handleClear}>End All Games</button>
+		<button on:click={fetchNewGame}>Add game</button>
+		<button on:click={startSinglePlayer}>Start Single Player Game</button>
+		<ul class="game-listing">
+			{#if gamesList !== null}
+				{#each gamesList as game}
+					<li class="listed-game">
+						<div class="players" class:open={game.phase === "open"}>
+							{#each game.players as p,i}
+								<div
+									class={p.playerType}
+									on:click={() => {handleClickPlayer(game._id, i)}}
+								>
+									{p.name}
+								</div>
+							{/each}
+						</div>
+						<button on:click={()=>handleStartGame(game._id)}
+							>Start!</button
+						>
+					</li>
+				{/each}
+			{:else}
+				<li>waiting</li>
+			{/if}
+		</ul>
+	</section>
 </main>
 
 <style>
-	.game-listing{
-		max-width:600px;
+	.main{
+		position: relative;
 	}
-	.listed-game{
+	.game-listing {
+		max-width: 600px;
+	}
+	.listed-game {
 		display: flex;
 		flex-direction: row;
-
 	}
 	.players {
 		display: flex;
@@ -102,5 +154,30 @@
 	.computer {
 		background-color: dimgray;
 		color: white;
+	}
+	.computer:hover {
+		transform: scale(1.1);
+		transition: 1s;
+	}
+	.modal-background{
+		visibility: hidden;
+		position: absolute;
+		display: grid;
+		place-items: center;
+		background-color: dimgrey;
+		top: 0;
+		bottom: 0;
+		left: 0;
+		right: 0;
+	}
+	.modal{
+		background-color: white;;
+		max-width: 500px;
+		padding: 40px;
+		border-radius: 5px;
+		box-shadow: 0 0 20px 0px black;
+	}
+	.showModal{
+		visibility: visible
 	}
 </style>
