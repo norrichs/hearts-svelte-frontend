@@ -31,7 +31,7 @@ export const user = derived(userParams, $userParams => {
 	return $userParams.username;
 })
 
-let delay = 10000;
+let delay = 1000;
 let debug = null // null, 'moonshot'
 const createGameState = (delay, debug) => {
 	console.log('createGameState', delay)
@@ -40,7 +40,7 @@ const createGameState = (delay, debug) => {
 		
 		
 		const interval = setInterval( async () => {
-			set( await pollGameState($userParams.gameId))
+			set( await pollGameState(gameIdLocal))
 		}, tick)
 
 		return ()=>clearInterval(interval)
@@ -54,7 +54,7 @@ const createGameState = (delay, debug) => {
 		// stop,
 		loadGame: async (gameId)=> set(await loadGame(gameId)),
 		syncState: (newGS)=>set(newGS),
-		pollNow: async () => {set(await pollGameState($userParams.gameId))}
+		pollNow: async () => {set(await pollGameState(gameIdLocal))}
 	}
 }
 
@@ -78,15 +78,17 @@ export const played = derived(gS, ($gS) => {
 
 const loadGame = async (gameId) => {
 	console.log('loadGame!', gameId)
-	const resp = await fetch(`${url}/gameState/getState/${gameId}`);
-	const data = await resp.json();
-	
+	gameIdLocal = gameId
+	let resp = await fetch(`${url}/gameState/getState/${gameId}`);
+	// const data = await resp.json();
+	resp = await fetchDealtHand()
+	const data = resp.json()
 	return data.data
 }
 
 const startNewGame = async (debug) => {
 	let newGame = await fetchNewGame();
-	$userParams.gameId = newGame._id;
+	gameIdLocal = newGame._id;
 	if(!debug){
 		console.log('no debug state')
 		newGame = await fetchDealtHand();
@@ -98,7 +100,7 @@ const startNewGame = async (debug) => {
 };
 
 const fetchDebugGame = async (debug )=> {
-	const resp = await fetch(`${url}/gameState/debug/${$userParams.gameId}/${debug}`);
+	const resp = await fetch(`${url}/gameState/debug/${gameIdLocal}/${debug}`);
 	const data = await resp.json();
 	return data.data
 }
@@ -113,7 +115,7 @@ const fetchNewGame = async () => {
 
 const fetchDealtHand = async () => {
 	console.log(" dealing hand");
-	const resp = await fetch(`${url}/gameState/deal/${$userParams.gameId}`);
+	const resp = await fetch(`${url}/gameState/deal/${gameIdLocal}`);
 	const data = await resp.json();
 	console.log(" - newly dealt hand gamedata", data.data);
 	return data.data;
@@ -121,7 +123,7 @@ const fetchDealtHand = async () => {
 
 const pollGameState = async () => {
 	// console.log(' refreshing game state')
-	const resp = await fetch(`${url}/gameState/pollState/${$userParams.gameId}/${user}`);
+	const resp = await fetch(`${url}/gameState/pollState/${gameIdLocal}/${user}`);
 	const data = await resp.json();
 	const result = { ...data.data };
 	console.log(" gS", result);
