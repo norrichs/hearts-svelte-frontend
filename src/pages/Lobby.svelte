@@ -1,5 +1,5 @@
 <script>
-	import { url, userParams, user, gameId } from "../stores.js";
+	import { url, userParams, user} from "../stores.js";
 	import { onMount } from "svelte";
 	import { Link, navigate } from "svelte-routing";
 
@@ -57,7 +57,14 @@
 		}
 	};
 
-	const handleStartGame = (gameId) => {
+	const handleStartGame = async (gameId) => {
+		$userParams.gameId = gameId
+		console.log('starting game', gameId, 'userParams gameId', $userParams.gameId)
+		// const resp = await fetch(`${url}/gameState/getState/${gameId}`)
+		// const data = await resp.json()
+		
+		// $gS = data.data
+		// console.log('got game', $gS)
 		navigate("/game")
 
 	}
