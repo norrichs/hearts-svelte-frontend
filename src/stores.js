@@ -9,7 +9,7 @@ let playerNumberLocal;
 const localUrl = 'http://localhost:4500'
 const deployedUrl = "https://hearts-backend.herokuapp.com";
 
-export const url = localUrl;
+export const url = deployedUrl;
 // let user = 0;
 
 export const passMap = [
