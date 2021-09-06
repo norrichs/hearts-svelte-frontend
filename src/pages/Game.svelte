@@ -3,10 +3,9 @@
 	import PlayDisplay from "../components/PlayDisplay.svelte";
 	import TrickPile from "../components/TrickPile.svelte";
 	import { navigate } from "svelte-routing";
-	import { gS, gameId, played, url, passMap } from "../stores.js";
-	import { onDestroy } from "svelte";
+	import { gS, played, url, userParams } from "../stores.js";
+	import { onDestroy, onMount } from "svelte";
 
-	export let user;
 	let obscuredMode = true;
 	// const localUrl = "http://localhost:4500";
 	// const deployedUrl = "https://hearts-backend.herokuapp.com"
@@ -24,30 +23,43 @@
 
 	// Handler Functions
 	const handleSelect = async (cardId) => {
-		console.log(" selecting card", $gameId, user, cardId);
+		console.log(
+			" selecting card",
+			$userParams.gameId,
+			$userParams.playerNumber,
+			cardId
+		);
 		const resp = await fetch(
-			`${url}/gameState/selectCard/${$gameId}/${user}/${cardId}`
+			`${url}/gameState/selectCard/${$userParams.gameId}/${$userParams.playerNumber}/${cardId}`
 		);
 		const data = await resp.json();
 		gS.syncState(data.data);
 	};
 	const handlePass = async () => {
-		console.log("  pass these cards", $gS.players[user].passes);
-		const resp = await fetch(`${url}/gameState/passCards/${$gameId}`);
+		console.log(
+			"  pass these cards",
+			$gS.players[$userParams.playerNumber].passes
+		);
+		const resp = await fetch(
+			`${url}/gameState/passCards/${$userParams.gameId}`
+		);
 		const data = await resp.json();
 		gS.syncState(data.data);
 	};
 	const handlePlay = async () => {
-		console.log("play this card", $gS.players[user].passes);
+		console.log(
+			"play this card",
+			$gS.players[$userParams.playerNumber].passes
+		);
 		const resp = await fetch(
-			`${url}/gameState/playCard/${$gameId}/${user}`
+			`${url}/gameState/playCard/${$userParams.gameId}/${$userParams.playerNumber}`
 		);
 		const data = await resp.json();
 		gS.syncState(data.data);
 	};
 	const handleDealHand = async () => {
 		console.log(" dealing hand");
-		const resp = await fetch(`${url}/gameState/deal/${$gameId}`);
+		const resp = await fetch(`${url}/gameState/deal/${$userParams.gameId}`);
 		const data = await resp.json();
 		console.log(" - newly dealt hand gamedata", data.data);
 		return data.data;
@@ -61,6 +73,16 @@
 	const handleSurrenderHand = () => {
 		console.log("surrender this hand, take all remaining hearts");
 	};
+
+	onMount(() => {
+		console.log(
+			"game mounted user",
+			$userParams.username,
+			"load game",
+			$userParams.gameId
+		);
+		gS.loadGame($userParams.gameId, $userParams.playerNumber);
+	});
 </script>
 
 {#if $gS === null}
@@ -71,33 +93,37 @@
 			<PlayDisplay />
 		</section>
 		<section class="west hand-area">
+			{$gS.players[($userParams.playerNumber + 1) % 4].name}
 			<div class="hand-wrapper">
 				<HandDisplay
 					{handleSelect}
-					cards={$gS.players[1].hand}
+					cards={$gS.players[($userParams.playerNumber + 1) % 4].hand}
 					{obscuredMode}
 				/>
 			</div>
 		</section>
 		<section class="north hand-area">
+			{$gS.players[($userParams.playerNumber + 2) % 4].name}
 			<div class="hand-wrapper">
 				<HandDisplay
 					{handleSelect}
-					cards={$gS.players[2].hand}
+					cards={$gS.players[($userParams.playerNumber + 2) % 4].hand}
 					{obscuredMode}
 				/>
 			</div>
 		</section>
 		<section class="east hand-area">
+			{$gS.players[($userParams.playerNumber + 3) % 4].name}
 			<div class="hand-wrapper">
 				<HandDisplay
 					{handleSelect}
-					cards={$gS.players[3].hand}
+					cards={$gS.players[($userParams.playerNumber + 3) % 4].hand}
 					{obscuredMode}
 				/>
 			</div>
 		</section>
 		<section class="south hand-area">
+			{$gS.players[$userParams.playerNumber].name}
 			<div class="hand-wrapper">
 				<button
 					class="game-button"
@@ -118,25 +144,25 @@
 				> -->
 				<button
 					class="game-button"
-					class:shown={$gS.players[user].passes.length === 1 &&
-						$gS.phase === "trick"}
+					class:shown={$gS.players[$userParams.playerNumber].passes
+						.length === 1 && $gS.phase === "trick"}
 					on:click={handlePlay}>Play Card</button
 				>
 				<button
 					class="game-button"
-					class:shown={$gS.players[user].passes.length === 3 &&
-						$gS.phase === "pass"}
+					class:shown={$gS.players[$userParams.playerNumber].passes
+						.length === 3 && $gS.phase === "pass"}
 					on:click={handlePass}>Pass</button
 				>
 				<HandDisplay
 					{handleSelect}
-					cards={$gS.players[0].hand}
+					cards={$gS.players[$userParams.playerNumber].hand}
 					obscuredMode={false}
 				/>
 			</div>
 		</section>
 		<aside class="trick-area">
-			<TrickPile {obscuredMode} user="0" />
+			<TrickPile {obscuredMode} user={$userParams.playerNumber} />
 		</aside>
 		<aside class="info-area">
 			<div><span>Play to:</span><span>{$gS.winScore}</span></div>
@@ -145,11 +171,19 @@
 				<div class="score-title">Score</div>
 				<div class="score-title">Hand</div>
 				<div class="score-title">Tricks</div>
-				{#each $gS.players as p}
+				<div class="score-title">#</div>
+				<div>-</div>
+				<div>-</div>
+				<div>-</div>
+				{#each $gS.players as p,i}
 					<div>{p.name}</div>
 					<div>{p.gameScore}</div>
 					<div>{p.handScore}</div>
 					<div>{p.tricks.length / 4}</div>
+					<div>{i}</div>
+					<div>-</div>
+					<div>-</div>
+					<div>-</div>
 				{/each}
 			</div>
 		</aside>
@@ -158,7 +192,7 @@
 			<button on:click={logState}>Log State</button>
 			<button on:click={handleReveal}>Reveal opponents</button>
 			<button on:click={handleSurrenderHand}>Surrender Hand</button>
-			<div>Game: {$gameId}</div>
+			<div>Game: {$userParams.gameId}</div>
 			<div>Hand: {$gS.handNum}</div>
 			<div>phase: {$gS.phase}</div>
 			<div>
@@ -199,7 +233,7 @@
 		border: 5px solid black;
 		max-width: calc(100% - 50px);
 		display: grid;
-		grid-template-columns: repeat(4, auto);
+		grid-template-columns: repeat(8, auto);
 		grid-template-rows: repeat(4, auto);
 		gap: 5px;
 		background-color: dimgray;
@@ -255,14 +289,14 @@
 	.hand-area.west {
 		grid-area: hw;
 	}
-	.debug-area {
+	/* .debug-area {
 		grid-area: i1;
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
 		justify-content: flex-end;
 		background-color: lightsteelblue;
-	}
+	} */
 	button.game-button.shown {
 		visibility: visible;
 		bottom: 100px;

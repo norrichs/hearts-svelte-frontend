@@ -2,7 +2,7 @@
 	import { onMount } from "svelte";
 
 	import CardFront from "../components/CardFront.svelte";
-	import { played, gS, passMap } from "../stores.js";
+	import { played, gS, passMap, userParams } from "../stores.js";
 	// export let played;
 	let order = [0, 1, 2, 3];
 	const directions = ["south", "west", "north", "east"];
@@ -13,11 +13,20 @@
 	<div>waiting</div>
 {:else}
 	<div class="play-display">
-		{#each order as place}
+		<!-- {#each order as place} 
 			<div class={directions[(place + $played.first) % 4]}>
 				<div class="card-place">
 					{#if $played.cards[place]}
 						<CardFront cardValue={$played.cards[place]} />
+					{/if}
+				</div>
+			</div>
+		{/each} -->
+		{#each order as place}
+			<div class={directions[place]}>
+				<div class="card-place">
+					{#if $played.cards[ (place + $userParams.playerNumber - $played.first) % 4]}
+						<CardFront cardValue={$played.cards[ (place + $userParams.playerNumber - $played.first) % 4]} />
 					{/if}
 				</div>
 			</div>
@@ -30,10 +39,10 @@
 				<div
 					class="turn-arrow"
 					style={"transform: rotateZ(" +
-						(order[$gS.activePlayer] * 90 + 90) +
+						(order[($gS.activePlayer + $userParams.playerNumber) % 4] * 90 - 90) +
 						"deg ); "}
 				>
-					<div></div>
+					<div />
 				</div>
 			{:else if $gS.phase === "hand-complete"}
 				Hand is complete
@@ -63,10 +72,10 @@
 		overflow: hidden;
 		box-sizing: border-box;
 	}
-	.turn-arrow>div{
+	.turn-arrow > div {
 		width: 0;
 		height: 0;
-		
+
 		border-right: 50px solid transparent;
 		border-top: 20px solid transparent;
 		border-bottom: 20px solid transparent;

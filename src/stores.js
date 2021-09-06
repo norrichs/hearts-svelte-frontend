@@ -4,11 +4,13 @@ import { writable, readable, derived } from "svelte/store";
 // import { newGameState } from './gameStates.js'
 
 let gameIdLocal;
+let playerNumberLocal;
+
 const localUrl = 'http://localhost:4500'
 const deployedUrl = "https://hearts-backend.herokuapp.com";
 
-export const url = deployedUrl;
-const user = 0;
+export const url = localUrl;
+// let user = 0;
 
 export const passMap = [
 	{ message: "no pass" },
@@ -19,16 +21,25 @@ export const passMap = [
 
 
 
+export const userParams = writable({
+	username: 'dude',
+	playerNumber: 0,
+	gameId: null,
+	winCount: 0,
+
+})
+
+export const user = derived(userParams, $userParams => {
+	return $userParams.username;
+})
+
 let delay = 1000;
 let debug = null // null, 'moonshot'
-
-// const delay = writable(5000)
-
 const createGameState = (delay, debug) => {
 	console.log('createGameState', delay)
 	const { subscribe, set, update } = writable(null, async (set,tick=delay)=>{
 		console.log('set', delay)
-		set(await startNewGame(debug))
+		
 		
 		const interval = setInterval( async () => {
 			set( await pollGameState(gameIdLocal))
@@ -42,7 +53,8 @@ const createGameState = (delay, debug) => {
 		subscribe,
 		update,
 		set,
-		stop,
+		// stop,
+		loadGame: async (gameId, playerNumber)=> set(await loadGame(gameId,playerNumber)),
 		syncState: (newGS)=>set(newGS),
 		pollNow: async () => {set(await pollGameState(gameIdLocal))}
 	}
@@ -50,68 +62,6 @@ const createGameState = (delay, debug) => {
 
 export const gS = createGameState(delay, debug)
 
-{
-// export const gS = writable(null, async (set) => {
-// 	set(await startNewGame());
-
-// 	const interval = setInterval(async () => {
-// 		set(await pollGameState(gameIdLocal));
-// 	}, 5000);
-
-// 	return () => clearInterval(interval);
-// });
-
-
-
-
-
-
-
-
-
-
-
-// WORKING WRITABLE STORE
-
-// export const gS = writable(null, async (set) => {
-// 	set(await startNewGame());
-
-// 	const interval = setInterval(async () => {
-// 		set(await pollGameState(gameIdLocal));
-// 	}, 5000);
-
-// 	return () => clearInterval(interval);
-// });
-
-
-
-
-
-// const createGS = () => {
-// 	const {subscribe, set, update} = writable(null, async (set)=>{
-// 		const newGame = await startNewGame()
-// 		gameIdLocal = newGame._id
-// 		set(newGame)
-// 		console.log('*** ',gameIdLocal)
-// 	})
-	
-// 	const interval = setInterval(async () => {
-// 		console.log('interval')
-// 		console.log(gameIdLocal)
-// 		set(await pollGameState(gameIdLocal))
-// 	}, 10000)
-	
-// 	return {
-// 		subscribe,
-// 		unsubscribe: () => clearInterval(interval)
-// 	}
-	
-// }
-
-// export const gS = createGS();
-
-
-}
 
 
 export const gameId = derived(gS, $gS => {
@@ -127,6 +77,16 @@ export const played = derived(gS, ($gS) => {
 	}
 });
 
+
+const loadGame = async (gameId, playerNumber) => {
+	console.log('loadGame!', gameId)
+	gameIdLocal = gameId
+	playerNumberLocal = playerNumber
+	let resp = await fetch(`${url}/gameState/getState/${gameId}`);
+	let data = await resp.json();
+	let gS = await fetchDealtHand()
+	return gS
+}
 
 const startNewGame = async (debug) => {
 	let newGame = await fetchNewGame();
@@ -165,7 +125,7 @@ const fetchDealtHand = async () => {
 
 const pollGameState = async () => {
 	// console.log(' refreshing game state')
-	const resp = await fetch(`${url}/gameState/getState/${gameIdLocal}/${user}`);
+	const resp = await fetch(`${url}/gameState/pollState/${gameIdLocal}/${playerNumberLocal}`);
 	const data = await resp.json();
 	const result = { ...data.data };
 	console.log(" gS", result);

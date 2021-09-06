@@ -1,7 +1,9 @@
 <script>
 	import { Router, Route, Link } from "svelte-routing";
+	import Splash from './pages/Splash.svelte'
 	import Lobby from "./pages/Lobby.svelte";
 	import Game from "./pages/Game.svelte";
+	import Signin from "./pages/Signin.svelte"
 	import {} from "svelte/easing";
 	// import SandBox from "./pages/SandBox.svelte";
 
@@ -11,8 +13,10 @@
 </script>
 
 <Router {url}>
-	<Route path="/"><Lobby /></Route>
-	<Route path="/game/"><Game {dbUrl} {user} /></Route>
+	<Route path="/"><Splash /></Route>
+	<Route path="/signin/"><Signin /></Route>
+	<Route path="/lobby/"><Lobby /></Route>
+	<Route path="/game/"><Game /></Route>
 	<!-- <Route path="/sandbox/"><SandBox /></Route> -->
 </Router>
 
