@@ -3,7 +3,7 @@
 	import PlayDisplay from "../components/PlayDisplay.svelte";
 	import TrickPile from "../components/TrickPile.svelte";
 	import { navigate } from "svelte-routing";
-	import { gS, url, userParams } from "../stores.js";
+	import { gS, played, url, userParams } from "../stores.js";
 	import { onDestroy, onMount } from "svelte";
 
 	let obscuredMode = true;
@@ -81,7 +81,7 @@
 			"load game",
 			$userParams.gameId
 		);
-		gS.loadGame($userParams.gameId);
+		gS.loadGame($userParams.gameId, $userParams.playerNumber);
 	});
 </script>
 
@@ -93,33 +93,37 @@
 			<PlayDisplay />
 		</section>
 		<section class="west hand-area">
+			{$gS.players[($userParams.playerNumber + 1) % 4].name}
 			<div class="hand-wrapper">
 				<HandDisplay
 					{handleSelect}
-					cards={$gS.players[$userParams.playerNumber + (1 % 4)].hand}
+					cards={$gS.players[($userParams.playerNumber + 1) % 4].hand}
 					{obscuredMode}
 				/>
 			</div>
 		</section>
 		<section class="north hand-area">
+			{$gS.players[($userParams.playerNumber + 2) % 4].name}
 			<div class="hand-wrapper">
 				<HandDisplay
 					{handleSelect}
-					cards={$gS.players[$userParams.playerNumber + (2 % 4)].hand}
+					cards={$gS.players[($userParams.playerNumber + 2) % 4].hand}
 					{obscuredMode}
 				/>
 			</div>
 		</section>
 		<section class="east hand-area">
+			{$gS.players[($userParams.playerNumber + 3) % 4].name}
 			<div class="hand-wrapper">
 				<HandDisplay
 					{handleSelect}
-					cards={$gS.players[$userParams.playerNumber + (3 % 4)].hand}
+					cards={$gS.players[($userParams.playerNumber + 3) % 4].hand}
 					{obscuredMode}
 				/>
 			</div>
 		</section>
 		<section class="south hand-area">
+			{$gS.players[$userParams.playerNumber].name}
 			<div class="hand-wrapper">
 				<button
 					class="game-button"
@@ -167,11 +171,19 @@
 				<div class="score-title">Score</div>
 				<div class="score-title">Hand</div>
 				<div class="score-title">Tricks</div>
-				{#each $gS.players as p}
+				<div class="score-title">#</div>
+				<div>-</div>
+				<div>-</div>
+				<div>-</div>
+				{#each $gS.players as p,i}
 					<div>{p.name}</div>
 					<div>{p.gameScore}</div>
 					<div>{p.handScore}</div>
 					<div>{p.tricks.length / 4}</div>
+					<div>{i}</div>
+					<div>-</div>
+					<div>-</div>
+					<div>-</div>
 				{/each}
 			</div>
 		</aside>
@@ -221,7 +233,7 @@
 		border: 5px solid black;
 		max-width: calc(100% - 50px);
 		display: grid;
-		grid-template-columns: repeat(4, auto);
+		grid-template-columns: repeat(8, auto);
 		grid-template-rows: repeat(4, auto);
 		gap: 5px;
 		background-color: dimgray;

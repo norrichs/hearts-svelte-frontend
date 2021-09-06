@@ -28,7 +28,7 @@
 	}
 
 	const handleAddToGame = async (gameId, name, user) => {
-		await fetch(`${url}/gameState/updateGameState/${gameId}/${user}/${name}/${isMultiplayer ? user : 'x'}`)
+		await fetch(`${url}/gameState/updateGameState/${gameId}/${user}/${name}/${isMultiplayer ? 'x' : user}`)
 		gamesList = await refreshGamesList();
 		showModal = false;
 	}

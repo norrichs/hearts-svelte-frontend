@@ -4,6 +4,8 @@ import { writable, readable, derived } from "svelte/store";
 // import { newGameState } from './gameStates.js'
 
 let gameIdLocal;
+let playerNumberLocal;
+
 const localUrl = 'http://localhost:4500'
 const deployedUrl = "https://hearts-backend.herokuapp.com";
 
@@ -52,7 +54,7 @@ const createGameState = (delay, debug) => {
 		update,
 		set,
 		// stop,
-		loadGame: async (gameId)=> set(await loadGame(gameId)),
+		loadGame: async (gameId, playerNumber)=> set(await loadGame(gameId,playerNumber)),
 		syncState: (newGS)=>set(newGS),
 		pollNow: async () => {set(await pollGameState(gameIdLocal))}
 	}
@@ -76,14 +78,14 @@ export const played = derived(gS, ($gS) => {
 });
 
 
-const loadGame = async (gameId) => {
+const loadGame = async (gameId, playerNumber) => {
 	console.log('loadGame!', gameId)
 	gameIdLocal = gameId
+	playerNumberLocal = playerNumber
 	let resp = await fetch(`${url}/gameState/getState/${gameId}`);
-	// const data = await resp.json();
-	resp = await fetchDealtHand()
-	const data = resp.json()
-	return data.data
+	let data = await resp.json();
+	let gS = await fetchDealtHand()
+	return gS
 }
 
 const startNewGame = async (debug) => {
@@ -123,7 +125,7 @@ const fetchDealtHand = async () => {
 
 const pollGameState = async () => {
 	// console.log(' refreshing game state')
-	const resp = await fetch(`${url}/gameState/pollState/${gameIdLocal}/${user}`);
+	const resp = await fetch(`${url}/gameState/pollState/${gameIdLocal}/${playerNumberLocal}`);
 	const data = await resp.json();
 	const result = { ...data.data };
 	console.log(" gS", result);
