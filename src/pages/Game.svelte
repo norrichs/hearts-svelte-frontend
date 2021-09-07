@@ -4,7 +4,7 @@
 	import TrickPile from "../components/TrickPile.svelte";
 	import { navigate } from "svelte-routing";
 	import { gS, played, url, userParams } from "../stores.js";
-	import { onDestroy, onMount } from "svelte";
+	import { createEventDispatcher, onDestroy, onMount } from "svelte";
 
 	let obscuredMode = true;
 	// const localUrl = "http://localhost:4500";
@@ -15,9 +15,7 @@
 
 	// Lifecycle
 	const unsubscribe = () => {
-		gS.subscribe((gS) => {
-			navigate("/", { replace: true });
-		});
+		gS.subscribe();
 	};
 	// onDestroy(()=>gS.unsubscribe)
 
@@ -83,17 +81,23 @@
 		);
 		gS.loadGame($userParams.gameId, $userParams.playerNumber);
 	});
+	onDestroy(() => unsubscribe());
 </script>
 
 {#if $gS === null}
 	<div>waiting</div>
 {:else}
 	<main class="game-main">
+		<section class="control-area">
+			<button on:click={() => navigate("/lobby")}>Back to Lobby</button>
+		</section>
 		<section class="play-area">
 			<PlayDisplay />
 		</section>
+		<div class="west name-label">
+			<div>{$gS.players[($userParams.playerNumber + 1) % 4].name}</div>
+		</div>
 		<section class="west hand-area">
-			{$gS.players[($userParams.playerNumber + 1) % 4].name}
 			<div class="hand-wrapper">
 				<HandDisplay
 					{handleSelect}
@@ -102,8 +106,10 @@
 				/>
 			</div>
 		</section>
+		<div class="north name-label">
+			<div>{$gS.players[($userParams.playerNumber + 2) % 4].name}</div>
+		</div>
 		<section class="north hand-area">
-			{$gS.players[($userParams.playerNumber + 2) % 4].name}
 			<div class="hand-wrapper">
 				<HandDisplay
 					{handleSelect}
@@ -112,8 +118,10 @@
 				/>
 			</div>
 		</section>
+		<div class="east name-label">
+			<div>{$gS.players[($userParams.playerNumber + 3) % 4].name}</div>
+		</div>
 		<section class="east hand-area">
-			{$gS.players[($userParams.playerNumber + 3) % 4].name}
 			<div class="hand-wrapper">
 				<HandDisplay
 					{handleSelect}
@@ -122,8 +130,11 @@
 				/>
 			</div>
 		</section>
+
+		<div class="south name-label">
+			<div>{$gS.players[$userParams.playerNumber].name}</div>
+		</div>
 		<section class="south hand-area">
-			{$gS.players[$userParams.playerNumber].name}
 			<div class="hand-wrapper">
 				<button
 					class="game-button"
@@ -134,7 +145,7 @@
 					class="game-button"
 					class:shown={$gS.phase === "game-complete"}
 					on:click={() => {
-						navigate("/", { replace: false });
+						navigate("/lobby", { replace: false });
 					}}>Somebody Won!</button
 				>
 				<!-- <button
@@ -166,62 +177,30 @@
 		</aside>
 		<aside class="info-area">
 			<div><span>Play to:</span><span>{$gS.winScore}</span></div>
-			<div class="score-grid">
-				<div class="score-title">Player</div>
-				<div class="score-title">Score</div>
-				<div class="score-title">Hand</div>
-				<div class="score-title">Tricks</div>
-				<div class="score-title">#</div>
-				<div>-</div>
-				<div>-</div>
-				<div>-</div>
-				{#each $gS.players as p,i}
-					<div>{p.name}</div>
-					<div>{p.gameScore}</div>
-					<div>{p.handScore}</div>
-					<div>{p.tricks.length / 4}</div>
-					<div>{i}</div>
-					<div>-</div>
-					<div>-</div>
-					<div>-</div>
+			<div>Hearts Broken: {$gS.heartsBroken ? "💔" : "⍉"}</div>
+			<dl class="score-grid">
+				<dt>Player</dt>
+				<dt>G</dt>
+				<dt>H</dt>
+				<dt>T</dt>
+				<!-- <dt>#</dt>
+				<dt>Played</dt>
+				<dt>-</dt>
+				<dt>-</dt> -->
+				{#each $gS.players as p, i}
+					<dd class:active-player={$gS.activePlayer === i}>
+						{p.name}
+					</dd>
+					<dd>{p.gameScore}</dd>
+					<dd>{p.handScore}</dd>
+					<dd>{p.tricks.length / 4}</dd>
+					<!-- <dd>{i}</dd>
+					<dd>{$played.cards[(i + 4 - $played.first) % 4]}</dd>
+					<dd>-</dd>
+					<dd>-</dd> -->
 				{/each}
-			</div>
+			</dl>
 		</aside>
-		<!-- <aside class="debug-area">
-			<div>backend url : {url}</div>
-			<button on:click={logState}>Log State</button>
-			<button on:click={handleReveal}>Reveal opponents</button>
-			<button on:click={handleSurrenderHand}>Surrender Hand</button>
-			<div>Game: {$userParams.gameId}</div>
-			<div>Hand: {$gS.handNum}</div>
-			<div>phase: {$gS.phase}</div>
-			<div>
-				<span>
-					first: {$played.first}
-				</span>
-				<span>
-					played: {$gS.playedCards.map(
-						(c) => c.id
-					)}{$played.cards.map((c) => c.id)}
-				</span>
-			</div>
-			<div>
-				Led: {$played.cards.length > 0 ? $played.cards[0][0] : ""}
-			</div>
-			<div>Active Player: {$gS.activePlayer}</div>
-			<div>{$gS.heartsBroken ? "💔" : "⍉"}</div>
-			<div>
-				Score: {$gS.maxScore}
-				{#each $gS.players as player, i}
-					<div>
-						<span>Player: {i} </span>
-						<span>G[{player.gameScore}]</span>
-						<span>H[{player.handScore}]</span>
-						<span> # {player.tricks.length / 4}</span>
-					</div>
-				{/each}
-			</div>
-		</aside> -->
 	</main>
 {/if}
 
@@ -229,11 +208,16 @@
 	.info-area {
 		grid-area: i1;
 	}
+	.info-area > div {
+		font-size: 1.5em;
+	}
 	.score-grid {
 		border: 5px solid black;
-		max-width: calc(100% - 50px);
+		--score-data-columns: 3;
+		width: calc(150px + var(--score-data-columns) * 55px);
+		/* max-width: calc(100% - 50px); */
 		display: grid;
-		grid-template-columns: repeat(8, auto);
+		grid-template-columns: auto repeat(var(--score-data-columns), 50px);
 		grid-template-rows: repeat(4, auto);
 		gap: 5px;
 		background-color: dimgray;
@@ -245,14 +229,25 @@
 			"n2 g2 h2 t2"
 			"n3 g3 h3 t30" */
 	}
-	.score-grid > div {
+	dt,
+	dd {
+		justify-content: start;
+		margin-inline: 0;
+		padding: 3px;
+	}
+	dl.score-grid > dt {
+		font-size: 1em;
+		color: black;
+	}
+	dl.score-grid > dd {
 		background-color: white;
-		padding: 5px;
+		/* padding: 5px; */
 		/* color:dodgerblue; */
 	}
-	.score-title {
-		color: firebrick;
+	dl.score-grid > dd.active-player {
+		background: rgba(220, 10, 10, 0.6);
 	}
+
 	.game-main {
 		margin: 0 auto;
 		box-sizing: border-box;
@@ -268,15 +263,49 @@
 		grid-template-columns: 10px 3fr 1fr 200px 10px 200px 1fr 3fr 10px;
 		grid-template-rows: 10px 3fr 200px 10px 200px 3fr 10px;
 		grid-template-areas:
-			" .  .  .  .  .  .  .  .  . "
-			" .  .  .  .  hn .  .  .  . "
+			" c1 c1 .  .  nn .  .  .  . "
+			" c1 c1 .  .  hn .  .  .  . "
 			" .  .  .  pa pa pa .  .  . "
-			" .  hw .  pa pa pa .  he . "
+			" nw hw .  pa pa pa .  he ne"
 			" .  .  .  pa pa pa .  .  . "
 			" .  i1 i1 .  hs .  t2 t2 t2"
-			" .  i1 i1 .  .  .  t2 t2 t2";
+			" .  i1 i1 .  ns .  t2 t2 t2";
 	}
-
+	.name-label {
+		position: relative;
+	}
+	.name-label > div{
+		position:absolute;
+		font-size: 2em;
+		border-radius: 10px;
+		border: 1px solid black;
+		background-color: burlywood;
+		padding: 5px;
+	}
+	.name-label.north > div{
+		top: 10px;
+	}
+	.name-label.west > div{
+		left: 10px;
+	}
+	.name-label.east > div{
+		right: 10px;
+	}
+	.name-label.south > div{
+		bottom: 10px;
+	}
+	.name-label.north {
+		grid-area: nn;
+	}
+	.name-label.east {
+		grid-area: ne;
+	}
+	.name-label.south {
+		grid-area: ns;
+	}
+	.name-label.west {
+		grid-area: nw;
+	}
 	.hand-area.north {
 		grid-area: hn;
 	}
@@ -288,6 +317,9 @@
 	}
 	.hand-area.west {
 		grid-area: hw;
+	}
+	.control-area {
+		grid-area: c1;
 	}
 	/* .debug-area {
 		grid-area: i1;

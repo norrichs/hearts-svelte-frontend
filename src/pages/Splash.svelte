@@ -10,15 +10,15 @@
 		<ul>
 			<li>Under construction.</li>
 			<li>
-				Game is currently configured to run in single-player mode, with 3
-				computer opponents.
+				Game is now capable of handling multiple human players in real-time!
 			</li>
-			<li>Opponents play with a 'random valid card' strategy.</li>
+			<li>Computer opponents play with a 'random valid card' strategy.</li>
 		</ul>
 		<h2>Coming soon...</h2>
 		<ul>
-			<li>Multi-player mode with opponent matching</li>
 			<li>Configurable game parameters (win score, animation speed, etc)</li>
+			<li>More animations</li>
+			<li>Leaderboard</li>
 		</ul>
 		<h2>More info</h2>
 		<ul>
@@ -26,7 +26,7 @@
 			<li><a href="https://github.com/norrichs/hearts-svelte-frontend">Frontend Github</a></li>
 			<li><a href="https://norrichs.com">My Portfolio</a></li>
 		</ul>
-		<Link to="/signin/"><button>Join a Game</button></Link>
+		<Link to="/signin/"><button type="submit">Join a Game</button></Link>
 	</section>
 </main>
 
