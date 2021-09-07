@@ -8,32 +8,40 @@
 	let showModal = false;
 	let joinedGameId = null;
 	let isMultiplayer = false;
+	let clickedPlayerType = null;
+	let clickedGameId = null;
+	let clickedPlayerNumber = null;
 
 	const startSinglePlayer = () => {};
 
-	const handleClickPlayer = (gameId, user) => {
-		const game = gamesList[gamesList.map(g=>g._id).indexOf(gameId)]
+	const handleClickPlayer = (gameId, clickedPlayer) => {
+		const game = gamesList[gamesList.map((g) => g._id).indexOf(gameId)];
+		clickedPlayerNumber = clickedPlayer;
+		clickedPlayerType = game.players[clickedPlayer].playerType;
+		clickedGameId = gameId;
 
-		console.log(game.players.map(p=>p.playerType))
-		if(game.players.map(p=>p.playerType).includes('human')){
+		console.log(game.players.map((p) => p.playerType));
+		if (game.players.map((p) => p.playerType).includes("human")) {
 			isMultiplayer = true;
 		}
-		// If already joined game...
-		// Need a different model to deal with assigning unique user id's to people...
-		
-
-		$userParams.gameId = gameId
-		$userParams.playerNumber = user
+		$userParams.gameId = gameId;
+		$userParams.playerNumber = clickedPlayer;
 		showModal = true;
-	}
+	};
+	const handleSwitchModal = () => {
+		console.log("showModal state", showModal);
+		showModal = showModal ? false : true;
+	};
 
 	const handleAddToGame = async (gameId, name, user) => {
-		await fetch(`${url}/gameState/updateGameState/${gameId}/${user}/${name}/${isMultiplayer ? 'x' : user}`)
+		await fetch(
+			`${url}/gameState/updateGameState/${gameId}/${user}/${name}/${
+				isMultiplayer ? "x" : user
+			}`
+		);
 		gamesList = await refreshGamesList();
 		showModal = false;
-	}
-
-
+	};
 	const refreshGamesList = async () => {
 		const resp = await fetch(`${url}/gameState/listGames`);
 		const data = await resp.json();
@@ -56,74 +64,128 @@
 			gamesList = await refreshGamesList();
 		}
 	};
-
-	const handleStartGame = async (gameId) => {
-		$userParams.gameId = gameId
-		console.log('starting game', gameId, 'userParams gameId', $userParams.gameId)
-		// const resp = await fetch(`${url}/gameState/getState/${gameId}`)
-		// const data = await resp.json()
-		
-		// $gS = data.data
-		// console.log('got game', $gS)
-		navigate("/game")
-
+	const handleEndGame = async (gameId) => {
+		if(confirm("End this game?")){
+			const resp = await fetch(`${url}/gameState/delete/${gameId}`)
+			gamesList = await refreshGamesList();
+		}
 	}
-	onMount(async () => {
-		console.log("lobby mounted, user", $userParams)
-		gamesList = await refreshGamesList();
+	const handleStartGame = async (gameId) => {
+		// Check if user already added. If not, add and update DB
 
+
+		$userParams.gameId = gameId;
+		const game = gamesList[gamesList.map(g=>g._id).indexOf(gameId)]
+		if(!game.players.map(p=>p.name).includes($userParams.username)){
+			game.players[clickedPlayerNumber].name = $userParams.username
+			game.players[clickedPlayerNumber].playerType = 'human'
+			// await gS.syncState(game)
+			await fetch(
+			`${url}/gameState/updateGameState/${gameId}/${clickedPlayerNumber}/${$userParams.username}/${clickedPlayerNumber}`
+		);
+		}
+		console.log(
+			"starting game",
+			gameId,
+			"userParams gameId",
+			$userParams.gameId
+		);
+
+		navigate("/game");
+	};
+	onMount(async () => {
+		console.log("lobby mounted, user", $userParams);
+		gamesList = await refreshGamesList();
 	});
 </script>
 
 <main>
-	
-	<section class='modal-background' class:showModal>
-		<div class='modal'>
-			<h2>Create your player to join</h2>
-			<div>{$user + "-" + $userParams.gameId}</div>
-			{#if !isMultiplayer}
-				<button>Start the game!</button>
-			{:else}
-				<div>Multiplayer</div>
-			{/if}
-			<button on:click={()=>{
-				handleAddToGame($userParams.gameId ,$user, $userParams.playerNumber)
-				showModal = false;
-			}}>Wait for more players</button>
-			
-			
-		</div>	
+	<section class="modal-background" class:showModal>
+		{#if clickedPlayerType === "computer" && gamesList.map(g=>g._id).includes(clickedGameId)}
+			<div class="modal">
+				<h2>Clicked game spot</h2>
+				<p>
+					Player '{gamesList[
+						gamesList.map((g) => g._id).indexOf(clickedGameId)
+					].players[clickedPlayerNumber].name}' is a computer.
+				</p>
+				<p>Take their spot?</p>
+				<!-- <p>{isMultiplayer}</p> -->
+				{#if !isMultiplayer}
+					<p>You can start this game now or Join to wait for more humans.</p>
+					<button on:click={handleStartGame(clickedGameId)}>Start the game!</button>
+				{:else}
+					<p>
+						Join now to wait for the primary human player to start
+						the game
+					</p>
+				{/if}
+				<button
+					on:click={() => {
+						handleAddToGame(
+							$userParams.gameId,
+							$user,
+							$userParams.playerNumber
+						);
+						showModal = false;
+					}}>Join</button
+				>
+				<button on:click={handleSwitchModal}>Cancel</button>
+			</div>
+		{:else if clickedPlayerType === "human"}
+			<div class="modal">
+				<h2>
+					{gamesList[
+						gamesList.map((g) => g._id).indexOf(clickedGameId)
+					].players[clickedPlayerNumber].name}
+				</h2>
+				<p>
+					This player is already a human. Choose a spot occupied by a
+					computer.
+				</p>
+				<button on:click={handleSwitchModal}>OK</button>
+			</div>
+		{/if}
 	</section>
-
 
 	<header>
 		<h1>Lobby</h1>
 		<h1>Logged in as: {$user}</h1>
 	</header>
 
-
 	<section>
 		<h2>Games</h2>
-		<button on:click={handleClear}>End All Games</button>
+		<!-- <button on:click={handleClear}>End All Games</button> -->
 		<button on:click={fetchNewGame}>Add game</button>
-		<button on:click={startSinglePlayer}>Start Single Player Game</button>
+		<!-- <button on:click={startSinglePlayer}>Start Single Player Game</button> -->
 		<ul class="game-listing">
 			{#if gamesList !== null}
 				{#each gamesList as game}
 					<li class="listed-game">
 						<div class="players" class:open={game.phase === "open"}>
-							{#each game.players as p,i}
+							{#if game.players[game.mainUser].name === $userParams.username}
+							<button on:click={()=>{handleEndGame(game._id)}}>X</button>
+							{/if}
+							{#each game.players as p, i}
 								<div
 									class={p.playerType}
-									on:click={() => {handleClickPlayer(game._id, i)}}
+									class:main-user={game.mainUser === i}
+									on:click={() => {
+										handleClickPlayer(game._id, i);
+									}}
 								>
 									{p.name}
 								</div>
 							{/each}
 						</div>
-						<button on:click={()=>handleStartGame(game._id)}
-							>Start!</button
-						>
+						<!-- {game.mainUser} -->
+						{#if game.players[game.mainUser].name === $userParams.username}
+							<button on:click={() => handleStartGame(game._id)}>
+								Start!
+							</button>
+						{:else}
+							Waiting on primary player...
+						{/if}
 					</li>
 				{/each}
 			{:else}
@@ -134,7 +196,7 @@
 </main>
 
 <style>
-	.main{
+	.main {
 		position: relative;
 	}
 	.game-listing {
@@ -158,6 +220,9 @@
 	.human {
 		background-color: antiquewhite;
 	}
+	.players > div.main-user{
+		border: 4px solid black;
+	}
 	.computer {
 		background-color: dimgray;
 		color: white;
@@ -166,7 +231,7 @@
 		transform: scale(1.1);
 		transition: 1s;
 	}
-	.modal-background{
+	.modal-background {
 		visibility: hidden;
 		position: absolute;
 		display: grid;
@@ -177,14 +242,14 @@
 		left: 0;
 		right: 0;
 	}
-	.modal{
-		background-color: white;;
+	.modal {
+		background-color: white;
 		max-width: 500px;
 		padding: 40px;
 		border-radius: 5px;
 		box-shadow: 0 0 20px 0px black;
 	}
-	.showModal{
-		visibility: visible
+	.showModal {
+		visibility: visible;
 	}
 </style>

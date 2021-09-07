@@ -1,33 +1,65 @@
 <script>
 	import { onMount } from "svelte";
+	import App from "../../../svelte-scratch/src/App.svelte";
 
 	import CardFront from "../components/CardFront.svelte";
-	import { played, gS, passMap, userParams } from "../stores.js";
+	import { played, gS, passMap, userParams, arrowAngle, user } from "../stores.js";
 	// export let played;
 	let order = [0, 1, 2, 3];
 	const directions = ["south", "west", "north", "east"];
 	console.log("playDisplay prop", $played);
+
+	let arrowDelta;
+	let previousArrowAngle = 270 + 90 * $userParams.playerNumber;
+	let arrowCumulativeAngle = 0;
+	//TODO refactor this
+	//	arrow rotate gives the destination angle
+	//		1. get the normalized previousAngle
+	//		2. get the positive delta angle
+	//		3. add the delta to the previous angle
+
+	$: if ($arrowAngle !== previousArrowAngle) {
+		arrowDelta =
+		$arrowAngle > previousArrowAngle
+		? $arrowAngle - previousArrowAngle
+		: $arrowAngle - previousArrowAngle + 360;
+		arrowCumulativeAngle = arrowCumulativeAngle + arrowDelta;
+		previousArrowAngle = $arrowAngle;
+		console.log(
+			"recalculated arrow angles previous", previousArrowAngle,
+			"arrowAngle", $arrowAngle,
+			"delta", arrowDelta, 
+			"cumulative", arrowCumulativeAngle
+		);
+	}
 </script>
 
 {#if $played === null}
 	<div>waiting</div>
 {:else}
 	<div class="play-display">
-		<!-- {#each order as place} 
-			<div class={directions[(place + $played.first) % 4]}>
-				<div class="card-place">
-					{#if $played.cards[place]}
-						<CardFront cardValue={$played.cards[place]} />
-					{/if}
-				</div>
-			</div>
-		{/each} -->
-		{#each order as place}
+		<!-- <div class="debug-display">
+			Cumulative Angle: {arrowCumulativeAngle}<br />
+			Arrow Angle: {$arrowAngle} <br />
+			First: {$played.first}
+			Played: {$played.cards.length}
+		</div> -->
+
+		{#each order as place, i}
 			<div class={directions[place]}>
 				<div class="card-place">
-					{#if $played.cards[ (place + $userParams.playerNumber - $played.first) % 4]}
-						<CardFront cardValue={$played.cards[ (place + $userParams.playerNumber - $played.first) % 4]} />
+					{#if $played.cards[(i + 4 - $played.first + $userParams.playerNumber) % 4]}
+						<CardFront
+							cardValue={$played.cards[
+								(i +
+									4 -
+									$played.first +
+									$userParams.playerNumber) %
+									4
+							]}
+						/>
 					{/if}
+
 				</div>
 			</div>
 		{/each}
@@ -38,9 +70,9 @@
 			{:else if $gS.phase === "trick"}
 				<div
 					class="turn-arrow"
-					style={"transform: rotateZ(" +
-						(order[($gS.activePlayer + $userParams.playerNumber) % 4] * 90 - 90) +
-						"deg ); "}
+					style={"--turn-arrow-rotation: " +
+						arrowCumulativeAngle +
+						"deg"}
 				>
 					<div />
 				</div>
@@ -66,11 +98,16 @@
 		border-radius: 60px;
 		font-size: 4em;
 		color: tomato;
-		transition: 400ms;
 		display: grid;
 		place-items: center;
 		overflow: hidden;
 		box-sizing: border-box;
+
+		transform: rotateZ(var(--turn-arrow-rotation));
+		transition: 400ms;
+		/* " +
+						(order[($gS.activePlayer + $userParams.playerNumber) % 4] * 90 - 90) +
+						"deg ); " */
 	}
 	.turn-arrow > div {
 		width: 0;
@@ -94,9 +131,13 @@
 			calc(var(--card-height) * var(--card-ratio))
 			var(--card-height);
 		grid-template-areas:
-			" .  pn .  "
+			" dd pn .  "
 			" pw pi pe "
 			" .  ps .  ";
+	}
+	.debug-display {
+		background-color: cornflowerblue;
+		grid-area: dd;
 	}
 	.play-display .north {
 		grid-area: pn;

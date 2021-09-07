@@ -9,7 +9,7 @@ let playerNumberLocal;
 const localUrl = 'http://localhost:4500'
 const deployedUrl = "https://hearts-backend.herokuapp.com";
 
-export const url = deployedUrl;
+export const url = localUrl;
 // let user = 0;
 
 export const passMap = [
@@ -29,37 +29,35 @@ export const userParams = writable({
 
 })
 
-export const user = derived(userParams, $userParams => {
-	return $userParams.username;
-})
 
 let delay = 1000;
 let debug = null // null, 'moonshot'
 const createGameState = (delay, debug) => {
 	console.log('createGameState', delay)
-	const { subscribe, set, update } = writable(null, async (set,tick=delay)=>{
+	const { subscribe, set, update, stop } = writable(null, async (set,tick=delay)=>{
 		console.log('set', delay)
 		
 		
 		const interval = setInterval( async () => {
 			set( await pollGameState(gameIdLocal))
 		}, tick)
-
+		
 		return ()=>clearInterval(interval)
 	}, delay, debug)
 
-
+	
 	return {
 		subscribe,
 		update,
 		set,
-		// stop,
+		stop,
 		loadGame: async (gameId, playerNumber)=> set(await loadGame(gameId,playerNumber)),
-		syncState: (newGS)=>set(newGS),
-		pollNow: async () => {set(await pollGameState(gameIdLocal))}
+		syncState: async (newGS)=>{
+			console.debug('syncing state', newGS);
+			await set(newGS)},
+			pollNow: async () => {set(await pollGameState(gameIdLocal))}
 	}
 }
-
 export const gS = createGameState(delay, debug)
 
 
@@ -77,6 +75,14 @@ export const played = derived(gS, ($gS) => {
 	}
 });
 
+export const user = derived(userParams, $userParams => {
+	return $userParams.username;
+})
+
+export const arrowAngle = derived([gS, userParams, played], ([$gS, $userParams, $played]) => {
+	// return ((4 + $gS.activePlayer - $played.first) % 4) * 90 
+	return ($played.first + $played.cards.length) * 90
+}, 0)
 
 const loadGame = async (gameId, playerNumber) => {
 	console.log('loadGame!', gameId)
@@ -128,6 +134,6 @@ const pollGameState = async () => {
 	const resp = await fetch(`${url}/gameState/pollState/${gameIdLocal}/${playerNumberLocal}`);
 	const data = await resp.json();
 	const result = { ...data.data };
-	console.log(" gS", result);
+	// console.log(" gS", result);
 	return result;
 };

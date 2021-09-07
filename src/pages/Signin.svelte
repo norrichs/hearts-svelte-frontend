@@ -1,7 +1,7 @@
 <script>
 	import { onMount } from "svelte";
 	import { played, url, userParams } from "../stores.js";
-	import {navigate} from 'svelte-routing'
+	import { navigate } from "svelte-routing";
 	let username;
 	let plaintextPassword;
 	let signInStatus = null;
@@ -28,47 +28,55 @@
 		// if username is found, check password validity
 		// if password is valid, navigate to Lobby with Store values set
 		if (username.length > 0 && plaintextPassword.length > 0) {
-			const resp = await fetch(`${url}/user/check/${username}/${plaintextPassword}`);
+			const resp = await fetch(
+				`${url}/user/check/${username}/${plaintextPassword}`
+			);
 			const data = await resp.json();
 			signInStatus = data.message;
 			console.log("signin status", signInStatus, "data", data);
 			if (signInStatus === "passed") {
 				$userParams = data.data;
-				navigate("/lobby", {replace: false})
+				navigate("/lobby", { replace: false });
 			} else if (signInStatus === "new") {
 				if (confirm("new username.  create as user and login?")) {
-					console.log('creating new user')
-					const resp = await fetch(`${url}/user/newUser/${username}/${plaintextPassword}`);
+					console.log("creating new user");
+					const resp = await fetch(
+						`${url}/user/newUser/${username}/${plaintextPassword}`
+					);
 					const data = await resp.json();
-					console.log('new user params data', data.data)
-					$userParams = data.data
-					console.log('just set userParams', $userParams)
-					navigate("/lobby", {replace: false})
+					console.log("new user params data", data.data);
+					$userParams = data.data;
+					console.log("just set userParams", $userParams);
+					navigate("/lobby", { replace: false });
 				}
 			} else {
 				alert("incorrect password!");
 			}
 		}
 	};
+	onMount(()=>{
+		document.getElementById('username-input').focus()
+	})
 </script>
 
 <main>
 	<section>
 		<h2>Sign In</h2>
-		<input type="text" placeholder="username" bind:value={username} />
-		<input
-			type="password"
-			placeholder="password"
-			bind:value={plaintextPassword}
-		/>
-		<button
-			on:click={async () => {
+		<form
+			on:submit|preventDefault={async () => {
 				await handleSignIn();
-			}}>Sign in</button
+			}}
 		>
+			<input id="username-input" type="text" placeholder="username" bind:value={username} />
+			<input
+				type="password"
+				placeholder="password"
+				bind:value={plaintextPassword}
+			/>
+			<button type="submit">Sign in</button>
+		</form>
 		<aside>
-			Don't use a real password here... Not secure... I'm not trying to
-			steal your real passwords...
+			Don't use a real password here... Passwords are encoded but still...
 		</aside>
 	</section>
 </main>
