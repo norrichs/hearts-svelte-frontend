@@ -1,7 +1,4 @@
 <script>
-	import { onMount } from "svelte";
-	import App from "../../../svelte-scratch/src/App.svelte";
-
 	import CardFront from "../components/CardFront.svelte";
 	import { played, gS, passMap, userParams, arrowAngle, user } from "../stores.js";
 	// export let played;
@@ -12,25 +9,18 @@
 	let arrowDelta;
 	let previousArrowAngle = 270 + 90 * $userParams.playerNumber;
 	let arrowCumulativeAngle = 0;
-	//TODO refactor this
-	//	arrow rotate gives the destination angle
-	//		1. get the normalized previousAngle
-	//		2. get the positive delta angle
-	//		3. add the delta to the previous angle
 
+	// REACTIVE CODE BLOCK
+	// 	runs whenever $arrowAngle updated
+	//	check if $arrowAntle actually changed, then calculate a cumulative angle
 	$: if ($arrowAngle !== previousArrowAngle) {
 		arrowDelta =
-		$arrowAngle > previousArrowAngle
-		? $arrowAngle - previousArrowAngle
-		: $arrowAngle - previousArrowAngle + 360;
+			$arrowAngle > previousArrowAngle
+			? $arrowAngle - previousArrowAngle
+			: $arrowAngle - previousArrowAngle + 360;
 		arrowCumulativeAngle = arrowCumulativeAngle + arrowDelta;
 		previousArrowAngle = $arrowAngle;
-		console.log(
-			"recalculated arrow angles previous", previousArrowAngle,
-			"arrowAngle", $arrowAngle,
-			"delta", arrowDelta, 
-			"cumulative", arrowCumulativeAngle
-		);
+
 	}
 </script>
 
@@ -38,13 +28,6 @@
 	<div>waiting</div>
 {:else}
 	<div class="play-display">
-		<!-- <div class="debug-display">
-			Cumulative Angle: {arrowCumulativeAngle}<br />
-			Arrow Angle: {$arrowAngle} <br />
-			First: {$played.first}
-			Played: {$played.cards.length}
-		</div> -->
-
 		{#each order as place, i}
 			<div class={directions[place]}>
 				<div class="card-place">
@@ -87,15 +70,12 @@
 
 <style>
 	.turn-arrow {
-		/* border: 1px solid black; */
-		/* width: calc( var(--card-width) * 0.9);
-		height: calc( var(--card-width) * 0.9); */
 		width: 100px;
 		height: 80px;
 
 		padding-left: 30px;
 		background-color: dimgrey;
-		border-radius: 60px;
+		border-radius: 50%;
 		font-size: 4em;
 		color: tomato;
 		display: grid;

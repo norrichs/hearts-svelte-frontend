@@ -89,7 +89,7 @@
 {:else}
 	<main class="game-main">
 		<section class="control-area">
-			<button on:click={() => navigate("/lobby")}>Back to Lobby</button>
+			<!-- <button on:click={() => navigate("/lobby", {replace: false, state: {}})}>Back to Lobby</button> -->
 		</section>
 		<section class="play-area">
 			<PlayDisplay />

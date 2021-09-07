@@ -7,12 +7,10 @@
 	import {} from "svelte/easing";
 	// import SandBox from "./pages/SandBox.svelte";
 
-	export let url = "";
-	const dbUrl = "http://localhost:4500";
-	const user = 0;
+
 </script>
 
-<Router {url}>
+<Router >
 	<Route path="/"><Splash /></Route>
 	<Route path="/signin/"><Signin /></Route>
 	<Route path="/lobby/"><Lobby /></Route>
